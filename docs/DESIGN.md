@@ -73,7 +73,8 @@ below that and the descriptions ellipsize.
 
 - **Primary sidebar** (`components/Sidebar.js`): fixed-width flex column
   (`w-36`, collapses to `w-16`), `bg-panel`, border-right, nav items stacked,
-  collapse toggle pinned to the bottom via a `flex-1` spacer.
+  collapse toggle pinned to the bottom via a `flex-1` spacer. It starts
+  collapsed so the page gets the full window on load.
 - **Sub-sidebar** (`components/SubSidebar.js`): the optional second sidebar,
   one per section, sitting between the primary nav and the content. `w-60` and
   `bg-panel2` so it reads as a nested context panel rather than a second nav.

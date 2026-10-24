@@ -16,7 +16,9 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  // Start collapsed: the app opens straight into a page, so the nav only takes
+  // space when the user asks for it.
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <aside

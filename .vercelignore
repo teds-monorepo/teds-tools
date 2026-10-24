@@ -1,0 +1,1 @@
+# Keep machine-local files out of the upload in case one is ever left in place.

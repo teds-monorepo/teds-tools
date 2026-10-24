@@ -1,0 +1,28 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Env & secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Vercel
+.vercel
+
+# pnpm / npm
+pnpm-debug.log*
+
+# TypeScript / Next.js
+*.tsbuildinfo
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/

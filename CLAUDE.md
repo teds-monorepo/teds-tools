@@ -18,10 +18,15 @@ rather than introducing new colors or radii.
 ## Commands
 
 ```bash
-npm install       # install deps
-npm run dev        # local dev server, http://localhost:3000
-npm run build       # production build — run this before considering a UI change done
-npm run lint         # eslint
+npm install
+npm run dev
+npm run build
+npm run lint
+```
+
+`npm install` fetches dependencies; `npm run dev` serves http://localhost:3000;
+`npm run build` is the production build — run it before considering a UI change
+done; `npm run lint` runs eslint.
 ```
 
 There are no automated tests yet. If you add non-trivial logic (especially

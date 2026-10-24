@@ -24,7 +24,7 @@ npm run build
 npm run lint
 ```
 
-`npm install` fetches dependencies; `npm run dev` serves http://localhost:3000;
+`npm install` fetches dependencies; `npm run dev` serves http://localhost:4502;
 `npm run build` is the production build — run it before considering a UI change
 done; `npm run lint` runs eslint.
 ```

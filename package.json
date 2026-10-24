@@ -8,7 +8,7 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4502",
     "build": "next build",
     "start": "next start",
     "lint": "echo \"no lint (JS project)\" && exit 0",

@@ -43,9 +43,8 @@ export default function LinksPage() {
   }
 
   /**
-   * The links in the bundled file's shape, so the download can replace
-   * `public/hub/links.json` and become the default for a browser that has never
-   * seeded.
+   * The links in export shape — a backup, and the source to paste into
+   * `seedIfEmpty` if the starter links ever need to change.
    */
   function exportFile() {
     downloadBlob(

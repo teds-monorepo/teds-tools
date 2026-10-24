@@ -21,16 +21,14 @@ rather than introducing new colors or radii.
 ## Commands
 
 ```bash
-npm install
-npm run dev
-npm run build
-npm run lint
+pnpm install
+pnpm dev
+pnpm build
 ```
 
-`npm install` fetches dependencies; `npm run dev` serves http://localhost:4502;
-`npm run build` is the production build — run it before considering a UI change
-done; `npm run lint` runs eslint.
-```
+`pnpm install` fetches dependencies; `pnpm dev` serves http://localhost:4502;
+`pnpm build` is the production build — run it before considering a UI change
+done. `lint`, `typecheck` and `test` are no-op stubs in this JS project.
 
 There are no automated tests yet. If you add non-trivial logic (especially
 in `lib/`), prefer writing it as a small pure function so it's easy to test
@@ -52,7 +50,7 @@ app/
 components/
   Sidebar.js        left nav, collapsible
   Modal.js           shared modal wrapper — reuse this for any new dialog
-  ItemRow.js         NoteRow / LinkRow / EmptyState
+  ItemRow.js         EmptyState
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
   assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
 lib/
@@ -94,8 +92,8 @@ docs/
    transform (`formatJsonPretty`, `toCamelCase`, `jwtDecode`, ...) _throws_
    so the page can raise one error toast. Text Tools owns the JSON and
    Base64 transforms now — the Tools page no longer has its own copies.
-3. **Reuse `Modal.js` and `ItemRow.js`** for anything modal- or list-row-
-   shaped rather than writing new markup — keeps the UI consistent.
+3. **Reuse `Modal.js`** for anything modal-shaped rather than writing new
+   markup — keeps the UI consistent.
 4. **Follow existing Tailwind token usage** (`bg-panel`, `bg-panel2`,
    `border-border`, `text-muted`, `text-accent`/`accent2`/`accent3`/`accent4`,
    `rounded-card`) instead of raw hex values or ad hoc radii. These are

@@ -17,11 +17,11 @@ Add a new tool called "<NAME>" to the Tools page:
 - Output: <what it produces>
 
 Implement it as a pure function in lib/tools.js (following the pattern of
-formatJson/base64Encode — input in, string out, no DOM access), add it to
+convertTimestamp/textDiff — input in, string out, no DOM access), add it to
 toolList, and add a small <YourTool /> component in app/tools/page.js
-following the existing tool components (JsonTool, Base64Tool, etc.) — reuse
-the shared inputClass/labelClass/runBtnClass constants already defined there.
-Run `npm run build` when done to confirm it compiles.
+following the existing tool components (UuidTool, TimestampTool, DiffTool) —
+reuse the shared inputClass/labelClass/runBtnClass constants already defined
+there. Run `pnpm build` when done to confirm it compiles.
 ```
 
 ---
@@ -35,11 +35,10 @@ Add a new entity type "<NAME>" to the app, following the same pattern as
 Notes/Links:
 - Fields: <list the fields, e.g. "title, code, language, date">
 - It needs: a data hook extension in lib/useHubData.js (add<Name>/remove<Name>),
-  a row component in components/ItemRow.js, a page at app/<name>/page.js,
-  and a nav entry in components/Sidebar.js.
+  a page at app/<name>/page.js, and a nav entry in components/Sidebar.js.
 
 Keep styling consistent with docs/DESIGN.md — reuse existing Tailwind
-token classes rather than introducing new colors/radii. Run `npm run build`
+token classes rather than introducing new colors/radii. Run `pnpm build`
 when done.
 ```
 
@@ -56,7 +55,7 @@ backend using <Vercel Postgres | Vercel KV | Supabase>. Add API routes under
 app/api/ for notes and links (GET/POST/DELETE). Keep useHubData()'s returned
 shape (ready, notes, links, addNote, removeNote, addLink, removeLink)
 unchanged so no page or component needs to change. Don't add auth yet —
-treat this as single-user for now. Run `npm run build` when done.
+treat this as single-user for now. Run `pnpm build` when done.
 ```
 
 ---
@@ -86,6 +85,6 @@ Read CLAUDE.md first, and docs/DESIGN.md if the task touches styling.
 
 Keep changes consistent with the existing patterns in this repo (data
 through lib/useHubData.js, tool logic as pure functions in lib/tools.js,
-shared Modal/ItemRow components, existing Tailwind tokens). Run `npm run
-build` when done to confirm it compiles.
+shared Modal component, existing Tailwind tokens). Run `pnpm build`
+when done to confirm it compiles.
 ```

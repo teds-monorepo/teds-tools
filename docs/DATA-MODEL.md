@@ -43,33 +43,19 @@ safely. To carry them over, export from the old System tab and import in
 ## Seeds
 
 **Notes and links are seeded** on first run, under the `teds-tools-seeded`
-flag, from the built-in starter rows in `seedIfEmpty`. `public/hub/notes.json`
-and `public/hub/links.json` carry the same shapes — a note is
-`{ title, body?, tag? }`, a link is `{ name, url }` — and `lib/hub.js` can
-validate them, but the current seed does not fetch them:
+flag, from the built-in starter rows hard-coded in `seedIfEmpty`
+(`lib/useHubData.js`). Nothing is fetched to seed: the seed runs entirely from
+the browser.
 
-```json
-[{ "title": "Welcome to Ted's Tools", "body": "…", "tag": "welcome" }]
-```
+Ids and dates are stamped by the data layer (`cryptoId()` + `todayStr()`) on
+each seeded row. Each collection is filled only while it is still empty, so a
+starter list the user has already begun is left alone; once the flag is set the
+seed never runs again, which is what keeps a deleted note or link deleted.
 
-```json
-[{ "name": "MDN Web Docs", "url": "https://developer.mozilla.org" }]
-```
-
-`parseBundledNotes` / `parseBundledLinks` in `lib/hub.js` validate the files and
-**throw** on a malformed one, so the seed's flag stays unset and the next load
-retries; an empty list is allowed and simply seeds nothing.
-
-Ids and dates are deliberately **not** in the file: the data layer stamps
-`cryptoId()` and `todayStr()` on each seeded row, so the file can never carry two
-rows with a colliding id and no date is frozen into it. Each collection is filled
-only while it is still empty, so a starter list the user has already begun is
-left alone; once the flag is set the seed never runs again, which is what keeps a
-deleted note or link deleted.
-
-`buildNotesFile` / `buildLinksFile` write the same shape back out, and each
-tab's **Export .json** downloads it as the file it seeds from — so a download
-can replace `public/hub/notes.json` as it stands.
+`buildNotesFile` / `buildLinksFile` in `lib/hub.js` write a note
+(`{ title, body?, tag? }`) or link (`{ name, url }`) list in export shape, and
+each tab's **Export .json** downloads it — useful as a backup or as the source
+for a new hard-coded seed.
 
 Whatever a seed adds must be spread into the loaded `db` (`{ ...db, notes: … }`)
 rather than replacing it: `seedIfEmpty` writes straight to storage, so an
@@ -119,9 +105,8 @@ creates, edits or deletes goes through the hook.
    `removeNote` pattern (validate required fields, generate `id` + `date`,
    `persist({ ...db, snippets: [...] })`).
 3. Return the new fields/functions from the hook.
-4. Add `app/snippets/page.js` (copy `app/notes/page.js` as a starting point),
-   a `SnippetRow` in `components/ItemRow.js`, and a nav entry in
-   `components/Sidebar.js`.
+4. Add `app/snippets/page.js` (copy `app/notes/page.js` as a starting point)
+   and a nav entry in `components/Sidebar.js`.
 5. Nothing else — there is no Home/dashboard view to surface it on, so the
    nav entry is the only place a new entity type appears.
 

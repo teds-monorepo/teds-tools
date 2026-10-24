@@ -40,7 +40,7 @@ app/
 components/
   Sidebar.js        left nav with collapsible toggle
   Modal.js           shared modal wrapper
-  ItemRow.js         note/link row + empty state
+  ItemRow.js         shared empty state
   color/             Color Tools panels
   assets/            Assets Tools + shared drop zone / frame overlay / toast
 lib/

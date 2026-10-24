@@ -35,9 +35,8 @@ export default function NotesPage() {
   }
 
   /**
-   * The notes in the bundled file's shape, so the download can replace
-   * `public/hub/notes.json` and become the default for a browser that has never
-   * seeded.
+   * The notes in export shape — a backup, and the source to paste into
+   * `seedIfEmpty` if the starter notes ever need to change.
    */
   function exportFile() {
     downloadBlob(

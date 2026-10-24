@@ -9,6 +9,7 @@ const navItems = [
   { href: '/texttools', label: 'Text Tools', icon: '✎' },
   { href: '/color', label: 'Color Tools', icon: '◐' },
   { href: '/assets', label: 'Assets Tools', icon: '◈' },
+  { href: '/model3d', label: '3D Viewer', icon: '⬢' },
   { href: '/notes', label: 'Notes', icon: '▤' },
   { href: '/links', label: 'Links', icon: '⛓' },
   { href: '/statics', label: 'Static Pages', icon: '▦' },

@@ -5,10 +5,13 @@ Guidance for Claude (or any AI assistant) working in this repository.
 ## What this project is
 
 Ted's Tools — a personal dashboard for a developer: quick-access dev tools
-(Tools, Text Tools, Color Tools), notes, and bookmark links, plus Static
-Pages for standalone HTML dropped into `public/`. Next.js 14 (App Router),
-React, Tailwind CSS. No backend yet — data lives in the browser's
+(Tools, Text Tools, Color Tools, Assets Tools), notes, and bookmark links, plus
+Static Pages for standalone HTML dropped into `public/`. Next.js 14 (App
+Router), React, Tailwind CSS. No backend — data lives in the browser's
 `localStorage`.
+
+The POE Tools section moved to its own app, `teds-poe`; nothing POE-related
+belongs in this repo any more.
 
 Dark theme, single accent-per-section palette (blue/green/purple/orange),
 rounded cards, left sidebar nav with a collapse toggle. See
@@ -43,23 +46,19 @@ app/
   texttools/page.js Text Tools view — group list in the sub-sidebar, one text buffer
   color/page.js      Color Tools view — panel list in the sub-sidebar, all color state starts here
   assets/page.js     Assets Tools view — slicer / packer / viewer in the sub-sidebar
-  poe/page.js       POE Tools view — Trade / Maker / Exchange / League / System sections
-  poe/actions.js     server action: reads the poe2 league list + stat texts (see lib/poe.js)
   notes/page.js     Notes view
   links/page.js     Links view
   statics/page.js   Static Pages view — server component, scans public/static_pages
 components/
   Sidebar.js        left nav, collapsible
   Modal.js           shared modal wrapper — reuse this for any new dialog
-  ItemRow.js         NoteRow / LinkRow / TradeConfigRow / EmptyState
+  ItemRow.js         NoteRow / LinkRow / EmptyState
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
   assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
-  poe/               POE Tools panels
 lib/
   useHubData.js      ALL data reads/writes go through this hook
   tools.js           pure functions for the Tools + Text Tools pages
   color.js           pure color math (conversions, palettes, WCAG contrast, shades/tints)
-  poe.js             pure trade payload, snippet, Maker merge, Exchange rates and import/export helpers
   hub.js             pure helpers for the bundled Notes/Links defaults (parse + build)
   spritesheet.js     pure Cocos atlas helpers (plist read/write, shelf packing)
   zip.js             store-only ZIP writer + downloadBlob — no zip dependency
@@ -71,12 +70,6 @@ public/
   static_pages/      standalone HTML pages: a folder with index.html, or a loose .html
   hub/               notes.json + links.json (Notes/Links seed defaults) — each tab's
                      Export .json writes its own file back out (see lib/hub.js)
-  poe/               poe2-payloads.json (Trade seed) + poe2-group-stats.json (Maker source)
-                     + poe2-exchange-cost.json (Exchange Cost seed) — each tab's
-                     Export .json writes its own file back out
-  poe/extension/     MV3 extension that runs a Snippet against the trade API with
-                     host permissions (a page fetch would be CORS-blocked). System
-                     tab zips it for download; the file list is EXTENSION_FILES in lib/poe.js
 docs/
   DESIGN.md          design tokens (colors, spacing, type) — read before touching styles
   DATA-MODEL.md       shape of notes/links + how to add a new entity type

@@ -12,7 +12,6 @@ const navItems = [
   { href: '/notes', label: 'Notes', icon: '▤' },
   { href: '/links', label: 'Links', icon: '⛓' },
   { href: '/statics', label: 'Static Pages', icon: '▦' },
-  { href: '/poe', label: 'POE Tools', icon: '⬡' },
 ];
 
 export default function Sidebar() {

@@ -1,6 +1,6 @@
 # Ted's Tools
 
-Personal dashboard for tools, notes and links — built with Next.js (App Router) and Tailwind CSS. Sections: Tools, Text Tools, Color Tools, Assets Tools, Notes, Links, Static Pages and POE Tools.
+Personal dashboard for tools, notes and links — built with Next.js (App Router) and Tailwind CSS. Sections: Tools, Text Tools, Color Tools, Assets Tools, Notes, Links and Static Pages.
 
 ## Run locally
 

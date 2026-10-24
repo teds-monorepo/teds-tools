@@ -26,8 +26,7 @@ is a read-only view of files on disk with no editing affordances, so it
 shares `accent3` with Links rather than claiming an accent of its own; Text
 Tools is one more tool surface and shares `accent` with Tools; Color Tools
 uses `accent4` for its chrome so the accent never competes with the colors
-the user is actually picking; Assets Tools shares `accent2` with Notes;
-POE Tools is one more tool surface and shares `accent` with Tools.
+the user is actually picking; Assets Tools shares `accent2` with Notes.
 
 Where an accent also carries meaning in the UI, use it for the "do the
 thing" button (Assets Tools' Slice/Pack/Play are `bg-accent2 text-bg`) and
@@ -110,32 +109,6 @@ below that and the descriptions ellipsize.
   - Assets Tools: one `SubItem` per tool (Slicer, Packer, Viewer); the pane
     shows the selected tool's own sections (drop zone, settings, preview,
     result). Switching tools drops the loaded files with it.
-  - POE Tools: one `SubItem` per section (Trade, Maker, Exchange, League,
-    System). Trade lists the saved trade configs and the generated console
-    snippet; League picks the league the searches run against; System
-    exports/imports the POE data. All render inline in the content pane, same
-    as the other tools.
-    Exchange is the one section with a second level of navigation: a tab row
-    (Duo Exchange / Triple Exchange / Exchange Cost / Example Rate) sitting on a
-    `border-b` at the top of the pane, each tab a `rounded-lg` pill using the
-    active `SubItem` colours (`bg-accent/[0.14] border-accent/30`). Use the same
-    pill row for any other section that outgrows a single view rather than adding
-    more `SubItem`s to the sub-sidebar.
-    A trade group (Duo and Triple alike) is the one place that breaks the
-    wrapping-flex rule for tool rows: it is a CSS grid whose columns are the
-    items and the rate counts between them, because a round's figures have to
-    land under the exact item they describe. Columns do not reflow, so the grid
-    carries a floor width and the card scrolls sideways rather than squashing
-    when the pane is narrower than that. A round is a rate line over a figures
-    line, a `border-t` rule separates the rounds and the totals that close the
-    card, and anything read-only — a carried-over amount, an item already
-    picked — draws as a dashed outline rather than the filled box an input uses,
-    so the two are never confused.
-    A trade config nests two levels of surface: the config itself is a
-    `bg-panel2` `rounded-xl` segment inside the page's `bg-panel` card, and each
-    of its stat-filter groups is a `bg-bg` `rounded-lg` segment inside that,
-    with a `border-b` separating the group's title row from its stat rows. Use
-    the same nesting for any new repeated block rather than stacking flat rows.
 - **Content** (`ContentPane`): `flex-1 min-w-0 overflow-y-auto` with generous
   padding (`px-6 py-7 pb-16`). No max-width cap — the dashboard should fill the
   window at any desktop size. A page that manages its own scrolling turns the

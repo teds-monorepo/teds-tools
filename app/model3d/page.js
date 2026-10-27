@@ -1,16 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
 import { DropZone, Section, Toast, useToast } from '@/components/assets/Shared';
 import ModelViewport from '@/components/model3d/ModelViewport';
-import {
-  ACCEPT_ATTR,
-  detectFormat,
-  describeStats,
-  formatBytes,
-  formatTime,
-} from '@/lib/model3d';
+import { ACCEPT_ATTR, detectFormat, describeStats, formatBytes, formatTime } from '@/lib/model3d';
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const BG_CHOICES = [
@@ -29,13 +23,14 @@ const toggleClass = (on) =>
 
 export default function Model3dPage() {
   const { toast, show } = useToast();
-  const [model, setModel] = useState(null);
-  const [clips, setClips] = useState([]);
-  const [clipIndex, setClipIndex] = useState(0);
-  const [playing, setPlaying] = useState(true);
+  // Every opened model stays in this list; the viewport only ever renders
+  // `activeId`. Playhead, clip and stats are stored per model so switching
+  // back to a model resumes where it was left.
+  const [models, setModels] = useState([]);
+  const [activeId, setActiveId] = useState(null);
+
   const [speed, setSpeed] = useState(1);
-  const [stats, setStats] = useState(null);
-  const [time, setTime] = useState({ current: 0, duration: 0 });
+  const [playhead, setPlayhead] = useState({ current: 0, duration: 0 });
   const [seekRequest, setSeekRequest] = useState(null);
   const [resetSignal, setResetSignal] = useState(0);
 
@@ -45,118 +40,281 @@ export default function Model3dPage() {
   const [showAxes, setShowAxes] = useState(false);
   const [bg, setBg] = useState(BG_CHOICES[0].id);
 
-  const urlRef = useRef(null);
+  const inputRef = useRef(null);
+  // id -> seconds. Kept out of state: it changes every animation frame and is
+  // only read when a model is switched back to.
+  const playheadsRef = useRef({});
+
+  const active = models.find((m) => m.id === activeId) || null;
+  // The viewport callbacks are memoised and fire from an animation loop, so
+  // they read the active id from a ref rather than closing over a stale value.
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
+  const clipIndex = active?.clipIndex ?? 0;
+  const clips = active?.clips ?? [];
+  const playing = active?.playing ?? false;
+  const duration = playhead.duration || clips[clipIndex]?.duration || 0;
+  // Stable list for the viewport's cache pruning; `models` changes identity
+  // whenever any model's stats update.
+  const openIds = useMemo(() => models.map((m) => m.id), [models]);
+
+  // Revoke every object URL on unmount so the blobs are released.
+  const modelsRef = useRef(models);
+  modelsRef.current = models;
   useEffect(
     () => () => {
-      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      modelsRef.current.forEach((m) => URL.revokeObjectURL(m.url));
     },
     []
   );
 
+  const patchModel = useCallback((id, patch) => {
+    modelsRef.current = modelsRef.current.map((m) => (m.id === id ? { ...m, ...patch } : m));
+    setModels(modelsRef.current);
+  }, []);
+
   const openFiles = useCallback(
     (fileList) => {
-      const file = fileList?.[0];
-      if (!file) return;
-      const ext = detectFormat(file.name);
-      if (!ext) {
-        show(`Unsupported file: ${file.name} (.glb/.gltf/.obj/.stl/.fbx)`, 'error');
-        return;
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+      const added = [];
+      for (const file of files) {
+        const ext = detectFormat(file.name);
+        if (!ext) {
+          show(`Unsupported file: ${file.name} (.glb/.gltf/.obj/.stl/.fbx)`, 'error');
+          continue;
+        }
+        // The id doubles as the viewport's load key, so dropping the same
+        // filename twice still produces a distinct entry and a fresh load.
+        const id = `${file.name}-${file.size}-${Date.now()}-${added.length}`;
+        added.push({
+          id,
+          key: id,
+          url: URL.createObjectURL(file),
+          ext,
+          name: file.name,
+          size: file.size,
+          stats: null,
+          clips: [],
+          clipIndex: 0,
+          playing: true,
+        });
       }
-      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-      const url = URL.createObjectURL(file);
-      urlRef.current = url;
-      setClips([]);
-      setClipIndex(0);
-      setStats(null);
-      setTime({ current: 0, duration: 0 });
-      setPlaying(true);
-      setModel({ url, ext, name: file.name, size: file.size, key: `${file.name}-${Date.now()}` });
+      if (!added.length) return;
+      modelsRef.current = [...modelsRef.current, ...added];
+      setModels(modelsRef.current);
+      setActiveId(added[0].id);
+      setSeekRequest(null);
+      setPlayhead({ current: 0, duration: 0 });
     },
     [show]
   );
 
-  const closeModel = useCallback(() => {
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
+  const removeModel = useCallback((id) => {
+    const current = modelsRef.current;
+    const removed = current.find((m) => m.id === id);
+    if (!removed) return;
+    URL.revokeObjectURL(removed.url);
+    delete playheadsRef.current[id];
+    const next = current.filter((m) => m.id !== id);
+    modelsRef.current = next;
+    setModels(next);
+
+    // Promote a neighbour when the removed model was the one on screen.
+    if (activeIdRef.current === id) {
+      const promoted = next[0] ?? null;
+      setActiveId(promoted?.id ?? null);
+      setSeekRequest(null);
+      setPlayhead({
+        current: promoted ? (playheadsRef.current[promoted.id] ?? 0) : 0,
+        duration: promoted?.clips[promoted.clipIndex]?.duration || 0,
+      });
     }
-    setModel(null);
-    setClips([]);
-    setStats(null);
+  }, []);
+
+  const closeAll = useCallback(() => {
+    modelsRef.current.forEach((m) => URL.revokeObjectURL(m.url));
+    modelsRef.current = [];
+    setModels([]);
+    playheadsRef.current = {};
+    setActiveId(null);
+    setSeekRequest(null);
+    setPlayhead({ current: 0, duration: 0 });
+  }, []);
+
+  const selectModel = useCallback((id) => {
+    if (id === activeIdRef.current) return;
+    const target = modelsRef.current.find((m) => m.id === id);
+    if (!target) return;
+    // The seek belongs to the model time is restored from, not the new one.
+    setSeekRequest(null);
+    setActiveId(id);
+    setPlayhead({
+      current: playheadsRef.current[id] ?? 0,
+      duration: target.clips[target.clipIndex]?.duration || 0,
+    });
   }, []);
 
   const handleLoaded = useCallback(
-    (nextStats, nextClips) => {
-      setStats(nextStats);
-      setClips(nextClips);
-      setClipIndex(0);
-      setTime({ current: 0, duration: nextClips[0]?.duration || 0 });
-      if (!nextClips.length) {
-        setPlaying(false);
-        show('Model loaded — no animations found.');
-      }
+    (id, nextStats, nextClips) => {
+      patchModel(id, { stats: nextStats, clips: nextClips, clipIndex: 0 });
+      if (!nextClips.length) show('Model loaded — no animations found.');
+      // Only the model on screen owns the visible playhead; the others restore
+      // theirs from playheadsRef when they are selected again.
+      if (activeIdRef.current !== id) return;
+      setPlayhead({
+        current: playheadsRef.current[id] ?? 0,
+        duration: nextClips[0]?.duration || 0,
+      });
     },
-    [show]
+    [patchModel, show]
   );
 
-  const handleTime = useCallback((current, duration) => {
-    setTime({ current, duration });
+  const handleTime = useCallback((id, current, durationValue) => {
+    playheadsRef.current[id] = current;
+    if (id !== activeIdRef.current) return;
+    setPlayhead((prev) =>
+      prev.current === current && prev.duration === durationValue
+        ? prev
+        : { current, duration: durationValue }
+    );
   }, []);
 
   const handleError = useCallback(
-    (msg) => {
+    (msg, id) => {
       show(msg, 'error');
-      closeModel();
+      if (id) removeModel(id);
     },
-    [show, closeModel]
+    [show, removeModel]
   );
 
-  const duration = time.duration || clips[clipIndex]?.duration || 0;
+  const changeClip = useCallback(
+    (index) => {
+      if (!active) return;
+      patchModel(active.id, { clipIndex: index });
+      playheadsRef.current[active.id] = 0;
+      setPlayhead({ current: 0, duration: clips[index]?.duration || 0 });
+    },
+    [active, clips, patchModel]
+  );
+
+  const seek = useCallback(
+    (value) => {
+      if (!active) return;
+      playheadsRef.current[active.id] = value;
+      setPlayhead((prev) => ({ ...prev, current: value }));
+      setSeekRequest({ modelId: active.id, time: value, nonce: Date.now() });
+    },
+    [active]
+  );
 
   return (
     <>
       <SubSidebar
         title="3D Viewer"
         action={
-          model ? (
-            <button type="button" onClick={closeModel} title="Close model" className={ghostBtnClass}>
+          models.length ? (
+            <button
+              type="button"
+              onClick={closeAll}
+              title="Close all models"
+              className={ghostBtnClass}
+            >
               ✕
             </button>
           ) : null
         }
       >
         <SubItem
-          active={!model}
-          onClick={() => {}}
+          active={!models.length}
+          onClick={() => inputRef.current?.click()}
           label="Open model"
           sub=".glb .gltf .obj .stl .fbx"
           icon={<Badge>◈</Badge>}
         />
-        {model && (
-          <div className="mt-2 px-2.5 py-2 rounded-[9px] border border-border bg-panel text-[11.5px] text-muted break-words">
-            <div className="text-text font-medium text-[12.5px] truncate" title={model.name}>
-              {model.name}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPT_ATTR}
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.length) openFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+
+        {models.map((m) => (
+          <div key={m.id} className="flex items-stretch gap-1 group">
+            <div className="flex-1 min-w-0">
+              <SubItem
+                active={m.id === activeId}
+                onClick={() => selectModel(m.id)}
+                label={m.name}
+                sub={
+                  [formatBytes(m.size), describeStats(m.stats)].filter(Boolean).join(' · ') ||
+                  'Loading…'
+                }
+                icon={<Badge>{m.ext.toUpperCase().slice(0, 3)}</Badge>}
+              />
             </div>
-            <div className="mt-1">
-              {formatBytes(model.size)}
-              {describeStats(stats) ? ` · ${describeStats(stats)}` : ''}
-            </div>
+            <button
+              type="button"
+              onClick={() => removeModel(m.id)}
+              title={`Close ${m.name}`}
+              className="flex-shrink-0 w-6 self-center text-muted hover:text-text opacity-0 group-hover:opacity-100 focus:opacity-100 rounded"
+            >
+              ✕
+            </button>
           </div>
-        )}
+        ))}
       </SubSidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5 flex flex-col gap-3.5">
-          {!model ? (
-            <DropZone onFiles={openFiles} accept={ACCEPT_ATTR} icon="◈">
+          {!active ? (
+            <DropZone onFiles={openFiles} accept={ACCEPT_ATTR} icon="◈" multiple>
               <div className="text-[13.5px] font-medium">Drop a 3D model here</div>
-              <div className="text-[12px] text-muted">.glb .gltf .obj .stl .fbx</div>
+              <div className="text-[12px] text-muted">
+                .glb .gltf .obj .stl .fbx — drop several to keep them side by side
+              </div>
             </DropZone>
           ) : (
             <>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[13.5px] font-medium truncate" title={active.name}>
+                    {active.name}
+                  </div>
+                  <div className="text-[11.5px] text-muted">
+                    {[formatBytes(active.size), describeStats(active.stats)]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className={ghostBtnClass}
+                  >
+                    ＋ Open another
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeModel(active.id)}
+                    className={ghostBtnClass}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
               <div className="h-[440px] min-h-[320px] bg-bg border border-border rounded-lg overflow-hidden">
                 <ModelViewport
-                  model={model}
+                  model={active}
+                  openIds={openIds}
+                  startTime={playheadsRef.current[active.id] ?? 0}
                   playing={playing}
                   clipIndex={clipIndex}
                   speed={speed}
@@ -183,14 +341,14 @@ export default function Model3dPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setPlaying((v) => !v)}
+                        onClick={() => patchModel(active.id, { playing: !playing })}
                         className="bg-accent2 text-bg px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold hover:brightness-110 w-[76px]"
                       >
                         {playing ? '❚❚ Pause' : '▶ Play'}
                       </button>
                       <select
                         value={clipIndex}
-                        onChange={(e) => setClipIndex(Number(e.target.value))}
+                        onChange={(e) => changeClip(Number(e.target.value))}
                         className="bg-bg border border-border rounded-lg px-2 py-1.5 text-[12.5px] max-w-[220px]"
                       >
                         {clips.map((c, i) => (
@@ -214,17 +372,15 @@ export default function Model3dPage() {
                     </div>
                     <div className="flex items-center gap-2.5">
                       <span className="text-[11.5px] text-muted tabular-nums w-[52px]">
-                        {formatTime(time.current)}
+                        {formatTime(playhead.current)}
                       </span>
                       <input
                         type="range"
                         min={0}
                         max={Math.max(duration, 0.001)}
                         step={0.01}
-                        value={Math.min(time.current, duration)}
-                        onChange={(e) =>
-                          setSeekRequest({ time: Number(e.target.value), nonce: Date.now() })
-                        }
+                        value={Math.min(playhead.current, duration)}
+                        onChange={(e) => seek(Number(e.target.value))}
                         disabled={!duration}
                         className="flex-1 accent-[#3ecf8e]"
                       />
@@ -239,22 +395,42 @@ export default function Model3dPage() {
               <Section
                 title="View"
                 actions={
-                  <button type="button" onClick={() => setResetSignal((n) => n + 1)} className={ghostBtnClass}>
+                  <button
+                    type="button"
+                    onClick={() => setResetSignal((n) => n + 1)}
+                    className={ghostBtnClass}
+                  >
                     Reset camera
                   </button>
                 }
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => setWireframe((v) => !v)} className={toggleClass(wireframe)}>
+                  <button
+                    type="button"
+                    onClick={() => setWireframe((v) => !v)}
+                    className={toggleClass(wireframe)}
+                  >
                     Wireframe
                   </button>
-                  <button type="button" onClick={() => setAutoRotate((v) => !v)} className={toggleClass(autoRotate)}>
+                  <button
+                    type="button"
+                    onClick={() => setAutoRotate((v) => !v)}
+                    className={toggleClass(autoRotate)}
+                  >
                     Auto-rotate
                   </button>
-                  <button type="button" onClick={() => setShowGrid((v) => !v)} className={toggleClass(showGrid)}>
+                  <button
+                    type="button"
+                    onClick={() => setShowGrid((v) => !v)}
+                    className={toggleClass(showGrid)}
+                  >
                     Grid
                   </button>
-                  <button type="button" onClick={() => setShowAxes((v) => !v)} className={toggleClass(showAxes)}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAxes((v) => !v)}
+                    className={toggleClass(showAxes)}
+                  >
                     Axes
                   </button>
                   <div className="flex items-center gap-1 ml-1">
@@ -275,8 +451,16 @@ export default function Model3dPage() {
                 </div>
               </Section>
 
-              <DropZone onFiles={openFiles} accept={ACCEPT_ATTR} icon="⇪" className="!py-4">
-                <div className="text-[12.5px] text-muted">Drop another file to replace this model</div>
+              <DropZone
+                onFiles={openFiles}
+                accept={ACCEPT_ATTR}
+                icon="⇪"
+                className="!py-4"
+                multiple
+              >
+                <div className="text-[12.5px] text-muted">
+                  Drop a file to open it in a new tab above
+                </div>
               </DropZone>
             </>
           )}
@@ -289,7 +473,7 @@ export default function Model3dPage() {
 
 function Badge({ children }) {
   return (
-    <span className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center text-[11px] flex-shrink-0 mt-0.5 bg-accent3/20 text-accent3">
+    <span className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5 bg-accent3/20 text-accent3">
       {children}
     </span>
   );

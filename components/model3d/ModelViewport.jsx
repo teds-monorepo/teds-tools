@@ -4,9 +4,11 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { findResourceUrl, pickMaterialFile } from '@/lib/model3d';
 
 /**
  * Three.js canvas for the 3D Viewer page. Owns the renderer, camera, lights
@@ -14,7 +16,9 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
  * metadata via onLoaded / onTime.
  *
  * Props:
- * - model: { url, ext, name, id } | null — the model currently on screen
+ * - model: { url, ext, name, id, resources } | null — the model currently on
+ *   screen. `resources` maps a base file name to a blob URL for the .mtl,
+ *   .bin and texture files dropped alongside it (see lib/model3d.js).
  * - openIds: string[] — every model still open in the sidebar; cached scenes
  *   for ids that disappear from this list are disposed
  * - startTime: number — clip time to restore when the model finishes loading
@@ -247,7 +251,7 @@ export default function ModelViewport({
     const loadId = model.id;
     let cancelled = false;
     clearStage(st);
-    loadModelFile(model.url, model.ext)
+    loadModelFile(model.url, model.ext, model.resources, model.name)
       .then(({ group, clips }) => {
         if (cancelled || st.disposed) {
           disposeObject(group);
@@ -324,15 +328,18 @@ const TARGET_SIZE = 3;
 
 // ── Loading ─────────────────────────────────────────────────────────────
 
-function loadModelFile(url, ext) {
+function loadModelFile(url, ext, resources, name) {
   if (ext === 'glb' || ext === 'gltf') {
-    return new GLTFLoader().loadAsync(url).then((gltf) => ({
+    return new GLTFLoader(resourceManager(resources)).loadAsync(url).then((gltf) => ({
       group: gltf.scene,
       clips: gltf.animations || [],
     }));
   }
   if (ext === 'obj') {
-    return new OBJLoader().loadAsync(url).then((group) => ({ group, clips: [] }));
+    // A .obj is just geometry; materials live in a sibling .mtl that the user
+    // has to drop with it. Without one the loader falls back to a default
+    // material, which is what OBJLoader does anyway.
+    return loadObjWithMaterials(url, resources, name);
   }
   if (ext === 'stl') {
     return new STLLoader().loadAsync(url).then((geo) => {
@@ -354,6 +361,58 @@ function loadModelFile(url, ext) {
     }));
   }
   return Promise.reject(new Error(`Định dạng .${ext} chưa được hỗ trợ.`));
+}
+
+/**
+ * LoadingManager that maps every referenced name/path to the blob URL of the
+ * file the user dropped with the model. Loaders ask for `materials.mtl` or
+ * `textures/wood.png`, never for the URL the page created, so without this an
+ * .obj + .mtl drop would fail to resolve its siblings. Unmatched URLs are left
+ * alone so a model with inline (data:) assets still loads on its own.
+ */
+function resourceManager(resources) {
+  const manager = new THREE.LoadingManager();
+  manager.setURLModifier((url) => findResourceUrl(resources, url) || url);
+  return manager;
+}
+
+/**
+ * .obj with an optional sibling .mtl. The .mtl itself lists its textures by
+ * name, so those resolve through the same manager. A missing .mtl is not an
+ * error: the model still loads with the default material.
+ */
+async function loadObjWithMaterials(url, resources, name) {
+  const manager = resourceManager(resources);
+  const mtlUrl = pickMaterialUrl(name || url, resources);
+
+  let materials = null;
+  if (mtlUrl) {
+    // Textures inside the .mtl are listed by name; the manager rewrites those
+    // names to the blob URLs of the files dropped with the model.
+    const mtlLoader = new MTLLoader(manager);
+    try {
+      materials = await mtlLoader.loadAsync(mtlUrl);
+      materials.preload();
+    } catch {
+      // A broken .mtl should not take the geometry down with it.
+      materials = null;
+    }
+  }
+
+  const objLoader = new OBJLoader(manager);
+  if (materials) objLoader.setMaterials(materials);
+  const group = await objLoader.loadAsync(url);
+  return { group, clips: [] };
+}
+
+/**
+ * The .mtl belonging to this model: the one sharing its base name, otherwise
+ * the only .mtl in the batch (see pickMaterialFile).
+ */
+function pickMaterialUrl(nameOrUrl, resources) {
+  const names = Object.keys(resources || {});
+  const match = pickMaterialFile(nameOrUrl, names);
+  return match ? findResourceUrl(resources, match) : null;
 }
 
 /**

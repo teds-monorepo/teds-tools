@@ -4,7 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
 import { DropZone, Section, Toast, useToast } from '@/components/assets/Shared';
 import ModelViewport from '@/components/model3d/ModelViewport';
-import { ACCEPT_ATTR, detectFormat, describeStats, formatBytes, formatTime } from '@/lib/model3d';
+import {
+  ACCEPT_ATTR,
+  baseFileName,
+  detectFormat,
+  describeStats,
+  formatBytes,
+  formatTime,
+  isCompanionFile,
+} from '@/lib/model3d';
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const BG_CHOICES = [
@@ -40,10 +48,14 @@ export default function Model3dPage() {
   const [showAxes, setShowAxes] = useState(false);
   const [bg, setBg] = useState(BG_CHOICES[0].id);
 
-  const inputRef = useRef(null);
   // id -> seconds. Kept out of state: it changes every animation frame and is
   // only read when a model is switched back to.
   const playheadsRef = useRef({});
+  // Base file name (lowercased) -> blob URL for .mtl/.bin/textures dropped
+  // alongside a model. Live object shared by every open model, so a companion
+  // dropped after its model is still visible to a later (re)load. Revoked only
+  // on unmount or when everything is closed.
+  const resourcesRef = useRef({});
 
   const active = models.find((m) => m.id === activeId) || null;
   // The viewport callbacks are memoised and fire from an animation loop, so
@@ -64,6 +76,7 @@ export default function Model3dPage() {
   useEffect(
     () => () => {
       modelsRef.current.forEach((m) => URL.revokeObjectURL(m.url));
+      for (const url of Object.values(resourcesRef.current)) URL.revokeObjectURL(url);
     },
     []
   );
@@ -77,11 +90,30 @@ export default function Model3dPage() {
     (fileList) => {
       const files = Array.from(fileList || []);
       if (!files.length) return;
+
+      // .mtl and textures are not models: they only ride along with one. Their
+      // blob URLs are kept by base name (the loaders resolve references by name,
+      // not by path), so an .obj and its files can be dropped in one batch and
+      // in any order.
+      let companionCount = 0;
+      for (const file of files) {
+        if (!isCompanionFile(file.name)) continue;
+        const key = baseFileName(file.name);
+        const previous = resourcesRef.current[key];
+        if (previous) URL.revokeObjectURL(previous);
+        resourcesRef.current[key] = URL.createObjectURL(file);
+        companionCount++;
+      }
+
       const added = [];
       for (const file of files) {
+        if (isCompanionFile(file.name)) continue;
         const ext = detectFormat(file.name);
         if (!ext) {
-          show(`Unsupported file: ${file.name} (.glb/.gltf/.obj/.stl/.fbx)`, 'error');
+          show(
+            `Unsupported file: ${file.name} (.glb/.gltf/.obj/.stl/.fbx, plus .mtl + textures for .obj)`,
+            'error'
+          );
           continue;
         }
         // The id doubles as the viewport's load key, so dropping the same
@@ -94,13 +126,22 @@ export default function Model3dPage() {
           ext,
           name: file.name,
           size: file.size,
+          // Live map, not a snapshot: a companion dropped after its model is
+          // still found when the model is reloaded.
+          resources: resourcesRef.current,
           stats: null,
           clips: [],
           clipIndex: 0,
           playing: true,
         });
       }
-      if (!added.length) return;
+
+      if (!added.length) {
+        if (companionCount) {
+          show('Materials/textures added — drop the .obj or .gltf they belong to.');
+        }
+        return;
+      }
       modelsRef.current = [...modelsRef.current, ...added];
       setModels(modelsRef.current);
       setActiveId(added[0].id);
@@ -134,6 +175,9 @@ export default function Model3dPage() {
 
   const closeAll = useCallback(() => {
     modelsRef.current.forEach((m) => URL.revokeObjectURL(m.url));
+    // No scene is left holding these, so the companion files go too.
+    for (const url of Object.values(resourcesRef.current)) URL.revokeObjectURL(url);
+    resourcesRef.current = {};
     modelsRef.current = [];
     setModels([]);
     playheadsRef.current = {};
@@ -208,6 +252,15 @@ export default function Model3dPage() {
     [active]
   );
 
+  // Back to the drop page. Opened models stay in the sidebar (and in the
+  // viewport cache), so picking one again resumes it where it was left.
+  const goToDropPage = useCallback(() => {
+    if (activeIdRef.current === null) return;
+    setSeekRequest(null);
+    setActiveId(null);
+    setPlayhead({ current: 0, duration: 0 });
+  }, []);
+
   return (
     <>
       <SubSidebar
@@ -226,22 +279,11 @@ export default function Model3dPage() {
         }
       >
         <SubItem
-          active={!models.length}
-          onClick={() => inputRef.current?.click()}
+          active={activeId === null}
+          onClick={goToDropPage}
           label="Open model"
-          sub=".glb .gltf .obj .stl .fbx"
+          sub="Drop a file below · .glb .gltf .obj .stl .fbx"
           icon={<Badge>◈</Badge>}
-        />
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPT_ATTR}
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files?.length) openFiles(e.target.files);
-            e.target.value = '';
-          }}
         />
 
         {models.map((m) => (
@@ -278,6 +320,9 @@ export default function Model3dPage() {
               <div className="text-[12px] text-muted">
                 .glb .gltf .obj .stl .fbx — drop several to keep them side by side
               </div>
+              <div className="text-[11.5px] text-muted">
+                For .obj, drop the .mtl and its textures with it to get materials
+              </div>
             </DropZone>
           ) : (
             <>
@@ -293,13 +338,6 @@ export default function Model3dPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    className={ghostBtnClass}
-                  >
-                    ＋ Open another
-                  </button>
                   <button
                     type="button"
                     onClick={() => removeModel(active.id)}
@@ -450,18 +488,6 @@ export default function Model3dPage() {
                   Drag to orbit · scroll to zoom · right-drag to pan
                 </div>
               </Section>
-
-              <DropZone
-                onFiles={openFiles}
-                accept={ACCEPT_ATTR}
-                icon="⇪"
-                className="!py-4"
-                multiple
-              >
-                <div className="text-[12.5px] text-muted">
-                  Drop a file to open it in a new tab above
-                </div>
-              </DropZone>
             </>
           )}
         </div>

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { ContentPane } from '@/components/SubSidebar';
+import { ContentPane } from '@/components/Sidebar';
 import { EmptyState } from '@/components/ItemRow';
 import { formatPageName, scanStaticPages } from '@/lib/staticPages';
 

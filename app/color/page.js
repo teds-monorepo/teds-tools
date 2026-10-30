@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import ColorInput from '@/components/color/ColorInput';
 import PaletteGenerator from '@/components/color/PaletteGenerator';
 import ContrastChecker from '@/components/color/ContrastChecker';
@@ -90,7 +90,7 @@ export default function ColorPage() {
 
   return (
     <>
-      <SubSidebar title="Color Tools">
+      <Sidebar title="Color Tools" activeLabel={active.label}>
         {TABS.map((tab) => (
           <SubItem
             key={tab.id}
@@ -105,7 +105,7 @@ export default function ColorPage() {
             }
           />
         ))}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5">

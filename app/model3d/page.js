@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import { DropZone, Section, Toast, useToast } from '@/components/assets/Shared';
 import ModelViewport from '@/components/model3d/ModelViewport';
 import {
@@ -263,8 +263,9 @@ export default function Model3dPage() {
 
   return (
     <>
-      <SubSidebar
+      <Sidebar
         title="3D Viewer"
+        activeLabel={active ? active.name : 'Open model'}
         action={
           models.length ? (
             <button
@@ -310,7 +311,7 @@ export default function Model3dPage() {
             </button>
           </div>
         ))}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5 flex flex-col gap-3.5">

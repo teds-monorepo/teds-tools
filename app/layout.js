@@ -1,5 +1,5 @@
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
 
 export const metadata = {
   title: "Ted's Tools",
@@ -9,9 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="flex h-screen overflow-hidden bg-bg text-text font-sans">
-        <Sidebar />
-        <main className="flex-1 min-w-0 flex">{children}</main>
+      <body className="flex flex-col h-screen overflow-hidden bg-bg text-text font-sans">
+        <Header />
+        <main className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row">{children}</main>
       </body>
     </html>
   );

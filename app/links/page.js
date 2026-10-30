@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useHubData } from '@/lib/useHubData';
 import { EmptyState } from '@/components/ItemRow';
 import Modal from '@/components/Modal';
-import { SubSidebar, SubItem, SubAction, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, SubAction, ContentPane } from '@/components/Sidebar';
 import { downloadBlob } from '@/lib/zip';
 import { LINKS_FILE, buildLinksFile } from '@/lib/hub';
 
@@ -55,8 +55,9 @@ export default function LinksPage() {
 
   return (
     <>
-      <SubSidebar
+      <Sidebar
         title="Links"
+        activeLabel={active?.name}
         action={
           <SubAction onClick={() => setOpen(true)} title="New link">
             +
@@ -77,7 +78,7 @@ export default function LinksPage() {
             />
           ))
         )}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="flex justify-between items-center gap-3 mb-2.5">

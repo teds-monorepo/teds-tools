@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import { MarkdownPanel } from '@/components/texttools/MarkdownPanel';
 import { textToolList } from '@/lib/tools';
 
@@ -46,7 +46,7 @@ export default function TextToolsPage() {
 
   return (
     <>
-      <SubSidebar title="Text Tools">
+      <Sidebar title="Text Tools" activeLabel={active.name}>
         {textToolList.map((tool) => (
           <SubItem
             key={tool.key}
@@ -63,7 +63,7 @@ export default function TextToolsPage() {
             }
           />
         ))}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5">

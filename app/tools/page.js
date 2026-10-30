@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import { toolList, generateUuid, convertTimestamp, textDiff } from '@/lib/tools';
 import { processEvents } from '@/lib/events';
 import { formatDate, formatShortDate, getToday, monthName, solarToLunar } from '@/lib/lunar';
@@ -12,7 +12,7 @@ export default function ToolsPage() {
 
   return (
     <>
-      <SubSidebar title="Tools">
+      <Sidebar title="Tools" activeLabel={active.name}>
         {toolList.map((t) => (
           <SubItem
             key={t.key}
@@ -29,7 +29,7 @@ export default function ToolsPage() {
             }
           />
         ))}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5">

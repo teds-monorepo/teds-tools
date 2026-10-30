@@ -32,11 +32,11 @@ Where an accent also carries meaning in the UI, use it for the "do the
 thing" button (Assets Tools' Slice/Pack/Play are `bg-accent2 text-bg`) and
 keep destructive or secondary actions on the neutral ghost button.
 
-Figures that go up and down — the Exchange card's `profit` — read
-`text-accent2` when they gain and `text-red-400` when they lose, and stay
-`text-muted` at zero. `text-red-400` is also the error colour (a failed form
-row, a rejected import); it is the one red in the app, and the one place a
-Tailwind default colour is used instead of a token.
+Figures that go up and down read `text-accent2` when they gain and
+`text-red-400` when they lose, and stay `text-muted` at zero. `text-red-400` is
+also the error colour (a failed form row, a rejected import); it is the one red
+in the app, and the one place a Tailwind default colour is used instead of a
+token.
 
 ## Radius
 
@@ -54,34 +54,36 @@ System font stack (Tailwind default `font-sans`). Sizes used:
 - `text-[13.5px]` — form inputs/buttons
 - `text-[12.5px]` / `text-xs` — labels, secondary text
 - `text-[11px]` — timestamps, tag chips
-- `text-[10px]` — the Exchange card's cell captions, uppercase and tracked out
+- `text-[10px]` — small cell captions, uppercase and tracked out
 - `font-mono` (Tailwind's default mono stack) — code snippets and hashes.
   `.tool-output` in `globals.css` is a separate, greener block for the Tools
   page's own output, not a general console style.
 
 ## Layout
 
-The app is a fixed-height shell (`h-screen overflow-hidden`) with independently
-scrolling panes: the two sidebars stay pinned and only the content column
-scrolls.
+The app is a fixed-height shell (`h-screen overflow-hidden`), column layout:
+`Header` on top, a horizontal row below with the page's `Sidebar` pinned left
+and only the content column scrolling.
 
-The primary sidebar is deliberately narrow (`w-36` / 144px) — nav labels are
-short, so they fit, and they truncate rather than wrap if they don't. The
-sub-sidebar is wider (`w-60` / 240px) because its `SubItem` rows carry a
-second description line that needs roughly 220px to render in full; drop
-below that and the descriptions ellipsize.
-
-- **Primary sidebar** (`components/Sidebar.js`): fixed-width flex column
-  (`w-36`, collapses to `w-16`), `bg-panel`, border-right, nav items stacked,
-  collapse toggle pinned to the bottom via a `flex-1` spacer. It starts
-  collapsed; hovering expands it, and leaving collapses it again unless the
-  toggle pinned it open.
-- **Sub-sidebar** (`components/SubSidebar.js`): the optional second sidebar,
-  one per section, sitting between the primary nav and the content. `w-60` and
-  `bg-panel2` so it reads as a nested context panel rather than a second nav.
-  Its header is the section title plus an optional compact `SubAction` button;
-  below it a stack of `SubItem` rows (icon, label, optional sub-line, active
-  state).
+- **Header** (`components/Header.js`, `h-14`, `bg-panel`, border-bottom): Logo
+  (left) + nav links for all sections (middle) + Contact button (right, opens
+  the Contact modal; info lives in the `CONTACT` const at the top of the file).
+  Responsive by measured space, not viewport width: a hidden measurer renders
+  the full header and a `ResizeObserver` flips to compact mode (Logo + hamburger
+  only, menu drops down with nav + Contact) whenever the full nav would
+  overflow — never a nav scrollbar. A narrow desktop window behaves like
+  mobile.
+- **Sidebar** (`components/Sidebar.js`): one per page, `w-60` and `bg-panel2`
+  so it reads as a nested context panel. Its header is the section title plus
+  an optional compact `SubAction` button; below it a stack of `SubItem` rows
+  (icon, label, optional sub-line, active state). `SubItem` rows carry a second
+  description line that needs roughly 220px to render in full; drop below that
+  and the descriptions ellipsize. The page passes `activeLabel` (the selected
+  tab/entry name).
+  - Desktop (`md+`): pinned left column. `main` is `md:flex-row`.
+  - Mobile: a dropdown bar under the header showing the section title, the
+    active tab name and `▾`/`▴`. Opening overlays the content (`absolute
+    top-full`, `bg-panel`); selecting any item closes it. `main` is `flex-col`.
   - Tools: lists the tools (UUID, timestamp, diff, Event Timeline); the
     selected tool renders inline in the content pane (no modal, no card grid).
     The timeline is the one tool that isn't an input/output widget — it draws a
@@ -90,10 +92,10 @@ below that and the descriptions ellipsize.
     column and the card side by side.
   - Notes / Links: lists the section's entries; the selected entry renders in
     the content pane as a detail card.
-- **Static Pages** has no sub-sidebar either — there is nothing to edit, so
+- **Static Pages** has no sidebar — there is nothing to edit, so
   the content pane is a `repeat(auto-fill, minmax(220px, 1fr))` grid of
   `bg-panel` cards that link straight out to the page (new tab).
-- **Text Tools** and **Color Tools** both use the sub-sidebar too, even
+- **Text Tools** and **Color Tools** both use the sidebar too, even
   though neither has saved entries: the list is the tool chooser.
   - Text Tools: one `SubItem` per tool group (JSON, Case, Trim, ...); the
     selected group's actions render as buttons in the content pane above a
@@ -116,8 +118,7 @@ below that and the descriptions ellipsize.
   window at any desktop size. A page that manages its own scrolling turns the
   padding and scrolling off via its `padded`/`scroll` props, not by appending
   classes.
-- There is no Home/dashboard view: `/` redirects to `/tools`, and every
-  section in the nav has a sub-sidebar.
+- There is no Home/dashboard view: `/` redirects to `/tools`.
 - Cards: `bg-panel border border-border rounded-card`, consistent internal
   padding (`px-4.5 pt-4.5 pb-2` for list panels, `px-4.5 pt-4.5 pb-4.5` for
   detail panels).
@@ -136,7 +137,6 @@ inline styles or new files without checking it resolves.
 
 ## Motion
 
-Minimal — only the sidebar width transition (`transition-all duration-150`)
-and hover states (`hover:border-accent`, `hover:brightness-110`). Don't add
+Minimal — only hover states (`hover:border-accent`, `hover:brightness-110`). Don't add
 entrance animations or hover effects beyond border/background color changes;
 it would clash with the current restrained feel.

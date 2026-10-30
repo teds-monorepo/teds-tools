@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SubSidebar, SubItem, ContentPane } from '@/components/SubSidebar';
+import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import SpriteSheetSlicer from '@/components/assets/SpriteSheetSlicer';
 import TexturePacker from '@/components/assets/TexturePacker';
 import SpritesheetViewer from '@/components/assets/SpritesheetViewer';
@@ -18,7 +18,7 @@ export default function AssetsPage() {
 
   return (
     <>
-      <SubSidebar title="Assets Tools">
+      <Sidebar title="Assets Tools" activeLabel={active.name}>
         {ASSET_TOOLS.map((tool) => (
           <SubItem
             key={tool.key}
@@ -33,7 +33,7 @@ export default function AssetsPage() {
             }
           />
         ))}
-      </SubSidebar>
+      </Sidebar>
 
       <ContentPane>
         <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5">

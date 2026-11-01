@@ -3,7 +3,7 @@ import Header from '@/components/Header';
 
 export const metadata = {
   title: "Ted's Tools",
-  description: 'Personal dashboard for tools, notes and links.',
+  description: 'Personal dashboard for developer tools.',
 };
 
 export default function RootLayout({ children }) {

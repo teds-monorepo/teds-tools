@@ -8,8 +8,8 @@ import Modal from '@/components/Modal';
 // Fill in your own info — shown in the Contact modal.
 const CONTACT = {
   name: "Ted's Tools",
-  email: 'you@example.com',
-  github: 'https://github.com/',
+  email: 'ducle95.work@gmail.com',
+  github: 'https://github.com/ducle95-work',
 };
 
 const navItems = [
@@ -18,8 +18,6 @@ const navItems = [
   { href: '/color', label: 'Color Tools' },
   { href: '/assets', label: 'Assets Tools' },
   { href: '/model3d', label: '3D Viewer' },
-  { href: '/notes', label: 'Notes' },
-  { href: '/links', label: 'Links' },
   { href: '/statics', label: 'Static Pages' },
 ];
 

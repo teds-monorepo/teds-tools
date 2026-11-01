@@ -5,10 +5,9 @@ Guidance for Claude (or any AI assistant) working in this repository.
 ## What this project is
 
 Ted's Tools — a personal dashboard for a developer: quick-access dev tools
-(Tools, Text Tools, Color Tools, Assets Tools), notes, and bookmark links, plus
-Static Pages for standalone HTML dropped into `public/`. Next.js 14 (App
-Router), React, Tailwind CSS. No backend — data lives in the browser's
-`localStorage`.
+(Tools, Text Tools, Color Tools, Assets Tools), plus Static Pages for
+standalone HTML dropped into `public/`. Next.js 14 (App Router), React,
+Tailwind CSS. No backend — data lives in the browser's `localStorage`.
 
 The POE Tools section moved to its own app, `teds-poe`; nothing POE-related
 belongs in this repo any more.
@@ -40,12 +39,10 @@ later, and consider adding a test file alongside it.
 app/
   layout.js        root layout — renders <Sidebar/> + page content
   page.js           `/` has no view of its own — redirects to /tools
-  tools/page.js     Tools view — UUID, timestamp, diff, Event Timeline
+  tools/page.js     Tools view — UUID, timestamp, Event Timeline
   texttools/page.js Text Tools view — group list in the sub-sidebar, one text buffer
   color/page.js      Color Tools view — panel list in the sub-sidebar, all color state starts here
   assets/page.js     Assets Tools view — slicer / packer / viewer in the sub-sidebar
-  notes/page.js     Notes view
-  links/page.js     Links view
   statics/page.js   Static Pages view — server component, scans public/static_pages
 components/
   Sidebar.js        left nav, collapsible
@@ -54,10 +51,9 @@ components/
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
   assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
 lib/
-  useHubData.js      ALL data reads/writes go through this hook
+  useHubData.js      ALL data reads/writes go through this hook (color history)
   tools.js           pure functions for the Tools + Text Tools pages
   color.js           pure color math (conversions, palettes, WCAG contrast, shades/tints)
-  hub.js             pure helpers for the bundled Notes/Links defaults (parse + build)
   spritesheet.js     pure Cocos atlas helpers (plist read/write, shelf packing)
   zip.js             store-only ZIP writer + downloadBlob — no zip dependency
   lunar.js           Vietnamese lunar calendar maths + date formatting
@@ -66,11 +62,9 @@ lib/
   staticPages.js     server-only scan of public/static_pages (uses node:fs)
 public/
   static_pages/      standalone HTML pages: a folder with index.html, or a loose .html
-  hub/               notes.json + links.json (Notes/Links seed defaults) — each tab's
-                     Export .json writes its own file back out (see lib/hub.js)
 docs/
   DESIGN.md          design tokens (colors, spacing, type) — read before touching styles
-  DATA-MODEL.md       shape of notes/links + how to add a new entity type
+  DATA-MODEL.md       localStorage shape + how to add a new entity type
   PROMPTS.md           ready-to-use prompts for common follow-up tasks on this repo
 ```
 
@@ -114,5 +108,5 @@ docs/
 ## Common follow-up tasks
 
 See `docs/PROMPTS.md` for ready-to-paste prompts for: adding a new tool,
-adding a new entity type (like Notes/Links), wiring up a real database,
-and adding auth. Skim `docs/DATA-MODEL.md` first if the task touches data.
+adding a new entity type, wiring up a real database, and adding auth. Skim
+`docs/DATA-MODEL.md` first if the task touches data.

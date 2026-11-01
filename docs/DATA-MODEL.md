@@ -3,69 +3,26 @@
 ## Current shape (localStorage, via `lib/useHubData.js`)
 
 ```ts
-type Note = {
-  id: string; // cryptoId() — random base36 string
-  title: string;
-  body: string; // may be empty
-  tag: string; // may be empty, single free-text tag
-  date: string; // pre-formatted display date, e.g. "Sep 18, 2026"
-};
-
-type Link = {
-  id: string;
-  name: string;
-  url: string; // stored as typed; https:// is assumed at render time if missing
-  date: string;
-};
-
 type ColorHistoryEntry = {
   hex: string; // "#6C8BFF" — the dedupe key
   rgb: { r: number; g: number; b: number };
 };
 
 type DB = {
-  notes: Note[];
-  links: Link[];
   colorHistory: ColorHistoryEntry[]; // most recent first, capped at 16
 };
 ```
 
 Everything is stored as one JSON blob under `localStorage["teds-tools-data"]`.
 
-The POE collections used to live in this blob too. They moved to their own app
-(`teds-poe`), which keeps its data under its own key — nothing here reads or
-writes them any more. A blob written before the split still carries
-`tradeConfigs`, `makerGroups`, `exchangeCosts`, `duoGroups`, `tripleGroups` and
-`poeLeague`; they are passed through untouched on every write and can be ignored
-safely. To carry them over, export from the old System tab and import in
-`teds-poe`.
+Keys written by sections that no longer exist — notes and links, plus the POE
+collections (`tradeConfigs`, `makerGroups`, `exchangeCosts`, `duoGroups`,
+`tripleGroups`, `poeLeague`) — may still be present in an older blob. They are
+passed through untouched on every write and can be ignored safely. The POE
+collections moved to `teds-poe`, which keeps its own storage key.
 
-## Seeds
-
-**Notes and links are seeded** on first run, under the `teds-tools-seeded`
-flag, from the built-in starter rows hard-coded in `seedIfEmpty`
-(`lib/useHubData.js`). Nothing is fetched to seed: the seed runs entirely from
-the browser.
-
-Ids and dates are stamped by the data layer (`cryptoId()` + `todayStr()`) on
-each seeded row. Each collection is filled only while it is still empty, so a
-starter list the user has already begun is left alone; once the flag is set the
-seed never runs again, which is what keeps a deleted note or link deleted.
-
-`buildNotesFile` / `buildLinksFile` in `lib/hub.js` write a note
-(`{ title, body?, tag? }`) or link (`{ name, url }`) list in export shape, and
-each tab's **Export .json** downloads it — useful as a backup or as the source
-for a new hard-coded seed.
-
-Whatever a seed adds must be spread into the loaded `db` (`{ ...db, notes: … }`)
-rather than replacing it: `seedIfEmpty` writes straight to storage, so an
-object literal without a key would drop that whole collection.
-
-Keep the write path and the read path in the same place — an earlier
-`migrateLegacyKeys()` helper here read and then removed a legacy key whose
-name was identical to `DB_KEY`, which deleted the whole database and the seed
-flag on every load and re-seeded over the top of it. Anything that touches
-these keys must be checked against the constants above.
+`colorHistory` is read with `db.colorHistory || []` so data saved before it
+existed still loads.
 
 ## The hook contract
 
@@ -74,17 +31,10 @@ these keys must be checked against the constants above.
 ```js
 {
   ready,        // bool — false until localStorage has been read (avoids SSR mismatch)
-  notes, links, colorHistory,  // arrays, as above
-  addNote({ title, body, tag }),
-  removeNote(id),
-  addLink({ name, url }),
-  removeLink(id),
+  colorHistory, // array, as above
   addColorToHistory({ r, g, b }),   // dedupes by hex, newest first, keeps 16
 }
 ```
-
-`colorHistory` is read with `db.colorHistory || []` so data saved before it
-existed still loads.
 
 **Call the hook once per page.** Each instance holds its own `db`, and every
 write persists a whole-object read-modify-write of `teds-tools-data` — two
@@ -98,15 +48,24 @@ Not everything belongs in here: the Event Timeline's holiday list
 plain imported array rather than a hook-backed collection. Anything the user
 creates, edits or deletes goes through the hook.
 
+When a seed writes straight to storage, spread it into the loaded `db`
+(`{ ...db, snippets: … }`) rather than replacing it — an object literal
+without a key would drop that whole collection.
+
+Keep the write path and the read path in the same place — an earlier
+`migrateLegacyKeys()` helper here read and then removed a legacy key whose
+name was identical to `DB_KEY`, which deleted the whole database on every
+load. Anything that touches these keys must be checked against the constants
+above.
+
 ## Adding a new entity type (e.g. "Snippets")
 
 1. Extend `DB` in `lib/useHubData.js`: add `snippets: []` to `emptyDB()`.
-2. Add `addSnippet` / `removeSnippet` following the existing `addNote`/
-   `removeNote` pattern (validate required fields, generate `id` + `date`,
+2. Add `addSnippet` / `removeSnippet` following the `addColorToHistory`
+   pattern (validate required fields, generate `id` + `date`,
    `persist({ ...db, snippets: [...] })`).
 3. Return the new fields/functions from the hook.
-4. Add `app/snippets/page.js` (copy `app/notes/page.js` as a starting point)
-   and a nav entry in `components/Sidebar.js`.
+4. Add `app/snippets/page.js` and a nav entry in `components/Header.js`.
 5. Nothing else — there is no Home/dashboard view to surface it on, so the
    nav entry is the only place a new entity type appears.
 
@@ -116,16 +75,14 @@ Keep the hook's return shape identical so no page/component needs to change.
 
 1. Add a database (Vercel Postgres, Vercel KV, or Supabase are the easiest
    fits for a Vercel deploy).
-2. Add API routes: `app/api/notes/route.js` (`GET`, `POST`), `app/api/notes/[id]/route.js`
-   (`DELETE`), same for `links`.
+2. Add API routes for the collections you move, e.g.
+   `app/api/snippets/route.js` (`GET`, `POST`) and
+   `app/api/snippets/[id]/route.js` (`DELETE`).
 3. Rewrite `lib/useHubData.js` internals:
-   - On mount, `fetch("/api/notes")` and `fetch("/api/links")` instead of
-     reading `localStorage`, set `ready` once both resolve.
-   - `addNote`/`addLink` become `fetch(..., { method: "POST", body: JSON.stringify(...) })`
-     then update local state with the server's response (so the real `id`
-     comes from the DB, not `cryptoId()`).
-   - `removeNote`/`removeLink` become `fetch(..., { method: "DELETE" })`.
-4. Drop the `cryptoId()`/seed logic once IDs and seed data are handled
-   server-side (or keep a seed migration/script instead).
-5. If multiple people will use this, add auth (see `docs/PROMPTS.md`) and
-   scope every query in the API routes to the signed-in user.
+   - On mount, `fetch("/api/...")` instead of reading `localStorage`, set
+     `ready` once all requests resolve.
+   - Writes become `fetch(..., { method: "POST" })` then update local state
+     with the server's response (so the real `id` comes from the DB).
+   - Deletes become `fetch(..., { method: "DELETE" })`.
+4. If multiple people will use this, add auth and scope every query in the
+   API routes to the signed-in user.

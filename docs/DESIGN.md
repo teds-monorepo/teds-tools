@@ -15,18 +15,16 @@ introducing new values.
 | `text`    | `#e8eaf3` | primary text                                    |
 | `muted`   | `#8891ab` | secondary text, labels, timestamps              |
 | `accent`  | `#6c8bff` | primary actions, active nav, Tools + Text Tools |
-| `accent2` | `#3ecf8e` | Notes + Assets Tools accent                    |
-| `accent3` | `#b17cff` | Links + Static Pages accent                     |
+| `accent2` | `#3ecf8e` | Assets Tools accent                            |
+| `accent3` | `#b17cff` | Static Pages accent                            |
 | `accent4` | `#ff9f5a` | Color Tools accent (and the Timestamp tool)     |
 
-Each of the four sections (Tools, Notes, Links, plus a general "primary")
-has its own accent — reuse `accent`/`accent2`/`accent3`/`accent4` rather
-than inventing a fifth unless a genuinely new section is added. Static Pages
-is a read-only view of files on disk with no editing affordances, so it
-shares `accent3` with Links rather than claiming an accent of its own; Text
-Tools is one more tool surface and shares `accent` with Tools; Color Tools
-uses `accent4` for its chrome so the accent never competes with the colors
-the user is actually picking; Assets Tools shares `accent2` with Notes.
+Each section has its own accent — reuse `accent`/`accent2`/`accent3`/`accent4`
+rather than inventing a fifth unless a genuinely new section is added. Static
+Pages is a read-only view of files on disk with no editing affordances, so it
+takes `accent3`; Text Tools is one more tool surface and shares `accent` with
+Tools; Color Tools uses `accent4` for its chrome so the accent never competes
+with the colors the user is actually picking.
 
 Where an accent also carries meaning in the UI, use it for the "do the
 thing" button (Assets Tools' Slice/Pack/Play are `bg-accent2 text-bg`) and
@@ -84,14 +82,12 @@ and only the content column scrolling.
   - Mobile: a dropdown bar under the header showing the section title, the
     active tab name and `▾`/`▴`. Opening overlays the content (`absolute
     top-full`, `bg-panel`); selecting any item closes it. `main` is `flex-col`.
-  - Tools: lists the tools (UUID, timestamp, diff, Event Timeline); the
+  - Tools: lists the tools (UUID, timestamp, Event Timeline); the
     selected tool renders inline in the content pane (no modal, no card grid).
     The timeline is the one tool that isn't an input/output widget — it draws a
     date-and-countdown rail, so its rows wrap the card onto its own line
     (`min-w-[min(180px,100%)]`) when the pane is too narrow for the date
     column and the card side by side.
-  - Notes / Links: lists the section's entries; the selected entry renders in
-    the content pane as a detail card.
 - **Static Pages** has no sidebar — there is nothing to edit, so
   the content pane is a `repeat(auto-fill, minmax(220px, 1fr))` grid of
   `bg-panel` cards that link straight out to the page (new tab).

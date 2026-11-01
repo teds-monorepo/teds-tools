@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
-import { toolList, generateUuid, convertTimestamp, textDiff } from '@/lib/tools';
+import { toolList, generateUuid, convertTimestamp } from '@/lib/tools';
 import { processEvents } from '@/lib/events';
 import { formatDate, formatShortDate, getToday, monthName, solarToLunar } from '@/lib/lunar';
 
@@ -36,7 +36,6 @@ export default function ToolsPage() {
           <div className="text-[15px] font-semibold mb-3">{active.name}</div>
           {active.key === 'uuid' && <UuidTool />}
           {active.key === 'timestamp' && <TimestampTool />}
-          {active.key === 'diff' && <DiffTool />}
           {active.key === 'timeline' && <EventTimelineTool />}
         </div>
       </ContentPane>
@@ -44,8 +43,6 @@ export default function ToolsPage() {
   );
 }
 
-const inputClass =
-  'w-full bg-bg border border-border text-text px-2.5 py-2 rounded-lg text-[13.5px] min-h-[80px] resize-y';
 const labelClass = 'block text-[12.5px] text-muted mt-2.5 mb-1.5';
 const runBtnClass = 'bg-accent text-white px-3.5 py-2 rounded-lg text-[13.5px] font-medium';
 function UuidTool() {
@@ -81,36 +78,6 @@ function TimestampTool() {
       <div className="flex justify-end mt-2">
         <button className={runBtnClass} onClick={() => setOut(convertTimestamp(input))}>
           Convert
-        </button>
-      </div>
-      <div className="tool-output">{out}</div>
-    </div>
-  );
-}
-
-function DiffTool() {
-  const [a, setA] = useState('');
-  const [b, setB] = useState('');
-  const [out, setOut] = useState('');
-  return (
-    <div>
-      <label className={labelClass}>Text A</label>
-      <textarea
-        value={a}
-        onChange={(e) => setA(e.target.value)}
-        placeholder="First text"
-        className={inputClass}
-      />
-      <label className={labelClass}>Text B</label>
-      <textarea
-        value={b}
-        onChange={(e) => setB(e.target.value)}
-        placeholder="Second text"
-        className={inputClass}
-      />
-      <div className="flex justify-end mt-2">
-        <button className={runBtnClass} onClick={() => setOut(textDiff(a, b))}>
-          Compare
         </button>
       </div>
       <div className="tool-output">{out}</div>

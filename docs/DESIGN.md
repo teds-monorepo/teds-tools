@@ -73,11 +73,11 @@ and only the content column scrolling.
   mobile.
 - **Sidebar** (`components/Sidebar.js`): one per page, `w-60` and `bg-panel2`
   so it reads as a nested context panel. Its header is the section title plus
-  an optional compact `SubAction` button; below it a stack of `SubItem` rows
-  (icon, label, optional sub-line, active state). `SubItem` rows carry a second
-  description line that needs roughly 220px to render in full; drop below that
-  and the descriptions ellipsize. The page passes `activeLabel` (the selected
-  tab/entry name).
+  the page's optional `action` slot (the 3D Viewer passes a close-all button);
+  below it a stack of `SubItem` rows (icon, label, optional sub-line, active
+  state). `SubItem` rows carry a second description line that needs roughly
+  220px to render in full; drop below that and the descriptions ellipsize. The
+  page passes `activeLabel` (the selected tab/entry name).
   - Desktop (`md+`): pinned left column. `main` is `md:flex-row`.
   - Mobile: a dropdown bar under the header showing the section title, the
     active tab name and `▾`/`▴`. Opening overlays the content (`absolute

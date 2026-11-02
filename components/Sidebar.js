@@ -73,20 +73,6 @@ export function SubItem({ active, onClick, icon, label, sub }) {
   );
 }
 
-/** Compact icon button used as a Sidebar `action`. */
-export function SubAction({ onClick, title, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className="w-7 h-7 flex-shrink-0 rounded-[7px] bg-panel border border-border text-muted hover:text-text hover:border-accent flex items-center justify-center text-[15px] leading-none"
-    >
-      {children}
-    </button>
-  );
-}
-
 /**
  * Scrollable, padded column that holds a page's main content.
  *

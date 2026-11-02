@@ -89,9 +89,15 @@ function EventTimelineTool() {
   // Processed after mount: the countdown depends on today's date, which would
   // differ between the prerendered HTML and the browser.
   const [events, setEvents] = useState([]);
-  useEffect(() => setEvents(processEvents()), []);
+  const [today, setToday] = useState(null);
+  useEffect(() => {
+    setToday(getToday());
+    setEvents(processEvents());
+  }, []);
 
-  const today = getToday();
+  // The date is derived on the client too, so the prerendered markup (built at
+  // deploy time) can't show a stale day or a hydration mismatch.
+  if (!today) return null;
   const lunar = solarToLunar(today);
 
   return (

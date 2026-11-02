@@ -5,8 +5,8 @@ Personal developer dashboard — built with Next.js (App Router) and Tailwind CS
 ## Run locally
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Open http://localhost:4502.
@@ -37,11 +37,13 @@ app/
   model3d/page.js   3D Viewer view
   statics/page.js   Static Pages view (lists public/static_pages)
 components/
-  Sidebar.js        left nav with collapsible toggle
+  Header.js          top bar (section links, Contact modal, compact mode)
+  Sidebar.js         per-page context panel (Sidebar, SubItem, ContentPane)
   Modal.js           shared modal wrapper
   ItemRow.js         shared empty state
   color/             Color Tools panels
   assets/            Assets Tools + shared drop zone / frame overlay / toast
+  model3d/           three.js viewport for the 3D Viewer
 lib/
   useHubData.js      data layer (color history) — currently localStorage
   tools.js           pure functions powering the Tools + Text Tools pages
@@ -50,6 +52,7 @@ lib/
   zip.js             store-only ZIP writer (no dependency) + download helper
   lunar.js           Vietnamese lunar calendar conversion
   events.js          static holiday list + next-occurrence/countdown logic
+  model3d.js         model-format helpers for the 3D Viewer
   staticPages.js     scans public/static_pages (server-only)
 public/
   static_pages/      standalone HTML pages, one folder or .html file each

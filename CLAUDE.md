@@ -13,8 +13,8 @@ The POE Tools section moved to its own app, `teds-poe`; nothing POE-related
 belongs in this repo any more.
 
 Dark theme, single accent-per-section palette (blue/green/purple/orange),
-rounded cards, left sidebar nav with a collapse toggle. See
-`docs/DESIGN.md` for the exact tokens — keep new UI consistent with them
+rounded cards, a header bar with the section links and a per-page sidebar.
+See `docs/DESIGN.md` for the exact tokens — keep new UI consistent with them
 rather than introducing new colors or radii.
 
 ## Commands
@@ -37,19 +37,22 @@ later, and consider adding a test file alongside it.
 
 ```
 app/
-  layout.js        root layout — renders <Sidebar/> + page content
+  layout.js        root layout — renders <Header/> and the page's own <Sidebar/> + content
   page.js           `/` has no view of its own — redirects to /tools
   tools/page.js     Tools view — UUID, timestamp, Event Timeline
-  texttools/page.js Text Tools view — group list in the sub-sidebar, one text buffer
-  color/page.js      Color Tools view — panel list in the sub-sidebar, all color state starts here
-  assets/page.js     Assets Tools view — slicer / packer / viewer in the sub-sidebar
+  texttools/page.js Text Tools view — group list in the sidebar, one text buffer
+  color/page.js      Color Tools view — panel list in the sidebar, all color state starts here
+  assets/page.js     Assets Tools view — slicer / packer / viewer in the sidebar
+  model3d/page.js    3D Viewer view — model list in the sidebar, GLB/GLTF/OBJ/STL/FBX loader
   statics/page.js   Static Pages view — server component, scans public/static_pages
 components/
-  Sidebar.js        left nav, collapsible
+  Header.js          top bar — logo, section links, Contact modal, space-measured compact mode
+  Sidebar.js        per-page context panel (Sidebar, SubItem, ContentPane)
   Modal.js           shared modal wrapper — reuse this for any new dialog
   ItemRow.js         EmptyState
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
   assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
+  model3d/           ModelViewport.jsx — the only three.js surface
 lib/
   useHubData.js      ALL data reads/writes go through this hook (color history)
   tools.js           pure functions for the Tools + Text Tools pages
@@ -59,6 +62,7 @@ lib/
   lunar.js           Vietnamese lunar calendar maths + date formatting
   events.js          static event list for the timeline + processEvents()
   md5.js             vendored pure-JS MD5 (Web Crypto has none)
+  model3d.js         pure model-format helpers for the 3D Viewer (no three.js)
   staticPages.js     server-only scan of public/static_pages (uses node:fs)
 public/
   static_pages/      standalone HTML pages: a folder with index.html, or a loose .html

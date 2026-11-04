@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#7cb342" />
+<meta name="description" content="Top-down game — điều khiển một nhân vật trên đồng cỏ." />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<title>Top-down Game</title>
+  <script type="module" crossorigin src="./assets/main-CVX_S-M5.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/ui-config-BagEic82.js">
+  <link rel="stylesheet" crossorigin href="./assets/main-zPhJwE8J.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <div id="loading">
+    <div class="load-box">
+      <div class="load-title">Top-down Game</div>
+      <div class="load-bar"><div id="load-fill"></div></div>
+      <div id="load-text">Đang nạp nhân vật...</div>
+    </div>
+  </div>
+
+  <!-- Every panel is drawn into the 3D scene (features/ui).
+       The DOM keeps only the loading veil. -->
+  <div id="sa-probe" aria-hidden="true"></div>
+</div>
+</body>
+</html>

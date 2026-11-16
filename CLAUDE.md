@@ -44,6 +44,7 @@ app/
   color/page.js      Color Tools view — panel list in the sidebar, all color state starts here
   assets/page.js     Assets Tools view — slicer / packer / viewer in the sidebar
   model3d/page.js    3D Viewer view — model list in the sidebar, GLB/GLTF/OBJ/STL/FBX loader
+  spine/page.js      Spine Viewer view — skeleton list in the sidebar, animation/skin/track controls
   statics/page.js   Static Pages view — server component, scans public/static_pages
 components/
   Header.js          top bar — logo, section links, Contact modal, space-measured compact mode
@@ -53,6 +54,7 @@ components/
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
   assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
   model3d/           ModelViewport.jsx — the only three.js surface
+  spine/             SpineViewport.jsx (the only Spine WebGL surface) + runtime.js, which loads the per-version runtime and builds a version-neutral skeleton handle
 lib/
   useHubData.js      ALL data reads/writes go through this hook (color history)
   tools.js           pure functions for the Tools + Text Tools pages
@@ -63,6 +65,7 @@ lib/
   events.js          static event list for the timeline + processEvents()
   md5.js             vendored pure-JS MD5 (Web Crypto has none)
   model3d.js         pure model-format helpers for the 3D Viewer (no three.js)
+  spine.js           pure Spine helpers: version detection, .atlas page parsing, skeleton file grouping (no WebGL)
   staticPages.js     server-only scan of public/static_pages (uses node:fs)
 public/
   static_pages/      standalone HTML pages: a folder with index.html, or a loose .html
@@ -108,6 +111,14 @@ docs/
    `/statics` lists it. The list is built when the page renders, so a running
    dev server picks new files up on refresh; a deployed build needs a
    redeploy.
+8. **Spine Viewer runtimes are version-locked.** Spine data is not cross-
+   compatible, so 3.8/4.1/4.2 each load their own runtime through
+   `components/spine/runtime.js` (4.1/4.2 are the npm aliases `spine41`/
+   `spine42`; 3.8 was never published to npm, so its UMD build is vendored at
+   `public/spine/spine-webgl-3.8.js`). Never import one version's runtime from
+   another version's code path, and keep all runtime calls behind the handle
+   `createSkeleton` returns. Using the Spine runtimes requires a Spine editor
+   license per Esoteric Software's terms.
 
 ## Common follow-up tasks
 

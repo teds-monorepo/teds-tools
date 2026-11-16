@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@esotericsoftware/spine-webgl@4.1.24>@esotericsoftware/spine-core': 4.1.24
+
 importers:
 
   .:
@@ -17,6 +20,12 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
+      spine41:
+        specifier: npm:@esotericsoftware/spine-webgl@4.1.24
+        version: '@esotericsoftware/spine-webgl@4.1.24'
+      spine42:
+        specifier: npm:@esotericsoftware/spine-webgl@4.2.43
+        version: '@esotericsoftware/spine-webgl@4.2.43'
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -39,6 +48,18 @@ packages:
   '@alloc/quick-lru@5.3.0':
     resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
     engines: {node: '>=10'}
+
+  '@esotericsoftware/spine-core@4.1.24':
+    resolution: {integrity: sha512-+XuQcT7teTohZaleWD4Z8SnDLInJorXQEhOXZ/a7Esz9oC+YehiHGR3DusEDI69kZ+9E7V1XeV6RnrtdeRB7LA==}
+
+  '@esotericsoftware/spine-core@4.2.43':
+    resolution: {integrity: sha512-FzpNkJllTwu7l1bHO6186r8D4/0UR3bkPWqMlLUZf57sh2ErV8iQFyPXiz3suZTXpfAjw4k5dVhAebPVUZMtXw==}
+
+  '@esotericsoftware/spine-webgl@4.1.24':
+    resolution: {integrity: sha512-xeFgBJByYhoKof3dG1pvRW8MDoNH5rKNPJ6RyOLE0WpRb2us4QdkHyYjyLWAhxz9DrUWNZeJQiLhjS3qwj/DWg==}
+
+  '@esotericsoftware/spine-webgl@4.2.43':
+    resolution: {integrity: sha512-ydffbWTd0b7Iw5BDHdnEgxEmf2xmQurx1ZVll9u50OfKPgk6QKvlo7vuY7UJIwtDRPALAhSql2sBJPVniYHixQ==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -521,6 +542,18 @@ packages:
 snapshots:
 
   '@alloc/quick-lru@5.3.0': {}
+
+  '@esotericsoftware/spine-core@4.1.24': {}
+
+  '@esotericsoftware/spine-core@4.2.43': {}
+
+  '@esotericsoftware/spine-webgl@4.1.24':
+    dependencies:
+      '@esotericsoftware/spine-core': 4.1.24
+
+  '@esotericsoftware/spine-webgl@4.2.43':
+    dependencies:
+      '@esotericsoftware/spine-core': 4.2.43
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

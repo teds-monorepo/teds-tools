@@ -21,6 +21,8 @@
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "spine41": "npm:@esotericsoftware/spine-webgl@4.1.24",
+    "spine42": "npm:@esotericsoftware/spine-webgl@4.2.43",
     "three": "^0.186.1"
   },
   "devDependencies": {
@@ -33,7 +35,10 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "@esotericsoftware/spine-webgl@4.1.24>@esotericsoftware/spine-core": "4.1.24"
+    }
   },
   "prettier": {
     "singleQuote": true,

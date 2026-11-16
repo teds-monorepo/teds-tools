@@ -18,6 +18,7 @@ const navItems = [
   { href: '/color', label: 'Color Tools' },
   { href: '/assets', label: 'Assets Tools' },
   { href: '/model3d', label: '3D Viewer' },
+  { href: '/spine', label: 'Spine Viewer' },
   { href: '/statics', label: 'Static Pages' },
 ];
 

@@ -112,7 +112,7 @@ docs/
    dev server picks new files up on refresh; a deployed build needs a
    redeploy.
 8. **Spine Viewer runtimes are version-locked.** Spine data is not cross-
-   compatible, so 3.8/4.1/4.2 each load their own runtime through
+   compatible, so 3.8.99/4.1/4.2 each load their own runtime through
    `components/spine/runtime.js` (4.1/4.2 are the npm aliases `spine41`/
    `spine42`; 3.8 was never published to npm, so its UMD build is vendored at
    `public/spine/spine-webgl-3.8.js`). Never import one version's runtime from

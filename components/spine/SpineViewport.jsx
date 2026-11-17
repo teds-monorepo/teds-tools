@@ -79,9 +79,7 @@ export default function SpineViewport({
           cam.cy = b.y + b.height / 2;
           cam.worldHeight = vh;
         };
-        fit();
-
-        const live = { spine, context, renderer, handle, cam, fit, lastTracksKey: '' };
+        const live = { spine, context, renderer, handle, cam, fit, lastTracksKey: '', lastTimeKey: '' };
         liveRef.current = live;
         callbacksRef.current.onLoaded(item.id, {
           animations: handle.animations,
@@ -90,7 +88,11 @@ export default function SpineViewport({
         });
         if (handle.animations.length) {
           handle.state.setAnimation(0, handle.animations[0].name, true);
+          handle.state.update(0);
+          handle.state.apply(handle.skeleton);
+          handle.updateWorldTransform();
         }
+        fit();
 
         let last = performance.now();
         const frame = (now) => {
@@ -136,7 +138,8 @@ export default function SpineViewport({
             .map(({ index, entry }) => ({
               track: index,
               name: entry.animation?.name || '(empty)',
-              time: entry.trackTime || 0,
+              // trackTime grows past the duration when looping; the playhead needs the wrapped time.
+              time: entry.getAnimationTime ? entry.getAnimationTime() : entry.trackTime || 0,
               duration: entry.animation?.duration || 0,
               loop: !!entry.loop,
             }));
@@ -146,7 +149,11 @@ export default function SpineViewport({
             callbacksRef.current.onTracks(item.id, tracks);
           }
           const t0 = tracks.find((t) => t.track === 0);
-          callbacksRef.current.onTime(item.id, t0?.time || 0, t0?.duration || 0);
+          const timeKey = `${Math.round((t0?.time || 0) * 20)}:${t0?.duration || 0}`;
+          if (timeKey !== live.lastTimeKey) {
+            live.lastTimeKey = timeKey;
+            callbacksRef.current.onTime(item.id, t0?.time || 0, t0?.duration || 0);
+          }
         };
         raf = requestAnimationFrame(frame);
       } catch (err) {
@@ -171,9 +178,11 @@ export default function SpineViewport({
   bgRef.current = bg;
 
   // ── Commands from the page ───────────────────────────────────────
+  const lastCommandNonceRef = useRef(null);
   useEffect(() => {
     const live = liveRef.current;
-    if (!live || !command) return;
+    if (!live || !command || command.nonce === lastCommandNonceRef.current) return;
+    lastCommandNonceRef.current = command.nonce;
     const { handle } = live;
     try {
       if (command.type === 'setTrack') {
@@ -196,8 +205,7 @@ export default function SpineViewport({
   useEffect(() => {
     const live = liveRef.current;
     if (!live || !seekRequest) return;
-    const entry = live.handle.state.tracks[0];
-    if (entry) entry.trackTime = seekRequest.time;
+    live.handle.seek(seekRequest.time);
   }, [seekRequest]);
 
   useEffect(() => {
@@ -269,7 +277,19 @@ export default function SpineViewport({
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="w-full h-full block cursor-grab" />;
+  return (
+    <div className="relative w-full h-full">
+      <canvas ref={canvasRef} className="w-full h-full block cursor-grab" />
+      <button
+        type="button"
+        title="Fit the skeleton inside the view"
+        onClick={() => liveRef.current?.fit()}
+        className="absolute bottom-2 right-2 bg-panel/80 border border-border text-muted hover:text-text px-2.5 py-1.5 rounded-lg text-[12px] backdrop-blur-sm"
+      >
+        ⤢ Fit
+      </button>
+    </div>
+  );
 }
 
 function clamp(v, min, max) {

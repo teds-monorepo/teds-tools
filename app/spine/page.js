@@ -42,8 +42,6 @@ export default function SpinePage() {
   const [seekRequest, setSeekRequest] = useState(null);
   const [resetSignal, setResetSignal] = useState(0);
   const [command, setCommand] = useState(null);
-  const [skinName, setSkinName] = useState('');
-  const [customSkins, setCustomSkins] = useState([]);
   const [debug, setDebug] = useState({
     bones: false,
     regionAttachments: false,
@@ -60,6 +58,8 @@ export default function SpinePage() {
   const activeIdRef = useRef(activeId);
   activeIdRef.current = activeId;
   const active = items.find((i) => i.id === activeId) || null;
+  const skinName = active?.skinName ?? '';
+  const customSkins = active?.customSkins ?? [];
   const effectivePma = pma ?? active?.defaultPma ?? false;
   const playing = active?.playing ?? true;
   const tracks = active?.tracks ?? [];
@@ -110,7 +110,7 @@ export default function SpinePage() {
 
           if (!runtimeKey) {
             show(
-              `${group.skeleton.name}: Spine ${version || 'unknown version'} is not supported (only 3.8, 4.1, 4.2).`,
+              `${group.skeleton.name}: Spine ${version || 'unknown version'} is not supported (only 3.8.99, 4.1, 4.2).`,
               'error'
             );
             continue;
@@ -139,6 +139,8 @@ export default function SpinePage() {
             skeletonBytes: isJson ? undefined : group.skeleton.bytes,
             animations: [],
             skins: [],
+            skinName: '',
+            customSkins: [],
             tracks: [],
             playing: true,
           });
@@ -148,8 +150,6 @@ export default function SpinePage() {
         itemsRef.current = [...itemsRef.current, ...added];
         setItems(itemsRef.current);
         setActiveId(added[0].id);
-        setSkinName('');
-        setCustomSkins([]);
       } catch (err) {
         show(err?.message || String(err), 'error');
       }
@@ -203,11 +203,12 @@ export default function SpinePage() {
 
   const handleLoaded = useCallback(
     (id, meta) => {
-      patchItem(id, meta);
-      if (activeIdRef.current === id) {
-        setSkinName(meta.skins[0] || '');
-        setCustomSkins([]);
-      }
+      const current = itemsRef.current.find((i) => i.id === id);
+      patchItem(id, {
+        ...meta,
+        skinName: current?.skinName || meta.skins[0] || '',
+        customSkins: current?.customSkins ?? [],
+      });
     },
     [patchItem]
   );
@@ -284,7 +285,7 @@ export default function SpinePage() {
                 .json/.skel + .atlas + texture .png — or one .zip with everything
               </div>
               <div className="text-[11.5px] text-muted">
-                Spine 3.8, 4.1 and 4.2 exports are supported; the version is detected
+                Spine 3.8.99, 4.1 and 4.2 exports are supported; the version is detected
                 automatically
               </div>
             </DropZone>
@@ -388,9 +389,11 @@ export default function SpinePage() {
                       max={Math.max(playhead.duration, 0.001)}
                       step={0.01}
                       value={Math.min(playhead.current, playhead.duration)}
-                      onChange={(e) =>
-                        setSeekRequest({ time: Number(e.target.value), nonce: Date.now() })
-                      }
+                      onChange={(e) => {
+                        const time = Number(e.target.value);
+                        setPlayhead((prev) => ({ ...prev, current: time }));
+                        setSeekRequest({ time, nonce: Date.now() });
+                      }}
                       disabled={!playhead.duration}
                       className="flex-1 accent-[#3ecf8e]"
                     />
@@ -465,11 +468,12 @@ export default function SpinePage() {
                   <select
                     value={skinName}
                     onChange={(e) => {
-                      setSkinName(e.target.value);
+                      patchItem(active.id, { skinName: e.target.value, customSkins: [] });
                       send({ type: 'setSkin', name: e.target.value });
                     }}
                     className="bg-bg border border-border rounded-lg px-2 py-1.5 text-[12.5px] max-w-[220px]"
                   >
+                    {skinName === '' && <option value="">(combined skin)</option>}
                     {active.skins.map((name) => (
                       <option key={name} value={name}>
                         {name}
@@ -482,9 +486,11 @@ export default function SpinePage() {
                       key={name}
                       type="button"
                       onClick={() =>
-                        setCustomSkins((prev) =>
-                          prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
-                        )
+                        patchItem(active.id, {
+                          customSkins: customSkins.includes(name)
+                            ? customSkins.filter((n) => n !== name)
+                            : [...customSkins, name],
+                        })
                       }
                       className={toggleClass(customSkins.includes(name))}
                     >
@@ -494,7 +500,10 @@ export default function SpinePage() {
                   <button
                     type="button"
                     disabled={!customSkins.length}
-                    onClick={() => send({ type: 'customSkin', names: customSkins })}
+                    onClick={() => {
+                      patchItem(active.id, { skinName: '' });
+                      send({ type: 'customSkin', names: customSkins });
+                    }}
                     className="bg-accent2 text-bg px-3 py-1.5 rounded-lg text-[12.5px] font-semibold hover:brightness-110 disabled:opacity-40"
                   >
                     Apply combined skin

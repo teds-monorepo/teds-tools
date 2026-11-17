@@ -37,6 +37,10 @@ function loadScriptRuntime() {
   });
 }
 
+function isPow2(n) {
+  return n > 0 && (n & (n - 1)) === 0;
+}
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -64,6 +68,13 @@ export async function createSkeleton(
     if (!img) throw new Error(`Texture page not loaded: ${path}`);
     return new spine.GLTexture(glContext, img, false);
   });
+  // WebGL1 cannot sample a non-power-of-two texture with mipmapped filters; it renders black instead.
+  for (const page of atlas.pages) {
+    const img = page.texture?.getImage?.();
+    if (img && (!isPow2(img.width) || !isPow2(img.height))) {
+      page.texture.setFilters(spine.TextureFilter.Linear, spine.TextureFilter.Linear);
+    }
+  }
 
   const loader = new spine.AtlasAttachmentLoader(atlas);
   const data = skeletonBytes
@@ -94,11 +105,31 @@ export async function createSkeleton(
       const offset = new spine.Vector2();
       const size = new spine.Vector2();
       skeleton.getBounds(offset, size, []);
+      const valid =
+        Number.isFinite(offset.x) && Number.isFinite(offset.y) &&
+        Number.isFinite(size.x) && Number.isFinite(size.y) && size.x > 0 && size.y > 0;
+      // No visible attachment in the current pose gives infinite bounds; fall back to the editor bounds.
+      if (!valid) {
+        const w = data.width > 0 ? data.width : 100;
+        const h = data.height > 0 ? data.height : 100;
+        return { x: (data.x || 0), y: (data.y || 0), width: w, height: h };
+      }
       return { x: offset.x, y: offset.y, width: size.x, height: size.y };
+    },
+    seek(time) {
+      const entry = state.tracks[0];
+      if (!entry?.animation) return;
+      const duration = entry.animation.duration || 0;
+      entry.trackTime = entry.loop && duration > 0 ? time % duration : Math.min(time, duration);
+      entry.setAnimationLast?.(entry.getAnimationTime());
+      state.apply(skeleton);
+      this.updateWorldTransform();
     },
     setSkin(name) {
       skeleton.setSkinByName(name);
       skeleton.setSlotsToSetupPose();
+      state.apply(skeleton);
+      this.updateWorldTransform();
     },
     setCustomSkin(names) {
       const custom = new spine.Skin('custom-skin');
@@ -108,6 +139,8 @@ export async function createSkeleton(
       }
       skeleton.setSkin(custom);
       skeleton.setSlotsToSetupPose();
+      state.apply(skeleton);
+      this.updateWorldTransform();
     },
     dispose() {
       for (const page of atlas.pages) page.texture?.dispose?.();

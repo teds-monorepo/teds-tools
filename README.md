@@ -1,6 +1,6 @@
 # Ted's Tools
 
-Personal developer dashboard — built with Next.js (App Router) and Tailwind CSS. Sections: Tools, Text Tools, Color Tools, Assets Tools, 3D Viewer and Static Pages.
+Personal developer dashboard — built with Next.js (App Router) and Tailwind CSS. Sections: Tools, Text Tools, Color Tools, Assets Tools and 3D Viewer. (Static Pages moved to `teds-projects`.)
 
 ## Run locally
 
@@ -35,7 +35,6 @@ app/
   color/page.js     Color Tools view (picker, palette, contrast, shades, gradient)
   assets/page.js    Assets Tools view (spritesheet slicer, texture packer, viewer)
   model3d/page.js   3D Viewer view
-  statics/page.js   Static Pages view (lists public/static_pages)
 components/
   Header.js          top bar (section links, Contact modal, compact mode)
   Sidebar.js         per-page context panel (Sidebar, SubItem, ContentPane)
@@ -53,9 +52,7 @@ lib/
   lunar.js           Vietnamese lunar calendar conversion
   events.js          static holiday list + next-occurrence/countdown logic
   model3d.js         model-format helpers for the 3D Viewer
-  staticPages.js     scans public/static_pages (server-only)
 public/
-  static_pages/      standalone HTML pages, one folder or .html file each
 docs/
   DESIGN.md          design tokens (colors, spacing, type)
   DATA-MODEL.md       data shapes + how to extend/migrate them

@@ -5,9 +5,11 @@ Guidance for Claude (or any AI assistant) working in this repository.
 ## What this project is
 
 Ted's Tools — a personal dashboard for a developer: quick-access dev tools
-(Tools, Text Tools, Color Tools, Assets Tools), plus Static Pages for
-standalone HTML dropped into `public/`. Next.js 14 (App Router), React,
-Tailwind CSS. No backend — data lives in the browser's `localStorage`.
+(Tools, Text Tools, Color Tools, Assets Tools). Next.js 14 (App Router),
+React, Tailwind CSS. No backend — data lives in the browser's `localStorage`.
+
+Static Pages moved to their own app, `teds-projects`; nothing static-page
+related belongs in this repo any more.
 
 The POE Tools section moved to its own app, `teds-poe`; nothing POE-related
 belongs in this repo any more.
@@ -45,7 +47,6 @@ app/
   assets/page.js     Assets Tools view — slicer / packer / viewer in the sidebar
   model3d/page.js    3D Viewer view — model list in the sidebar, GLB/GLTF/OBJ/STL/FBX loader
   spine/page.js      Spine Viewer view — skeleton list in the sidebar, animation/skin/track controls
-  statics/page.js   Static Pages view — server component, scans public/static_pages
 components/
   Header.js          top bar — logo, section links, Contact modal, space-measured compact mode
   Sidebar.js        per-page context panel (Sidebar, SubItem, ContentPane)
@@ -66,9 +67,7 @@ lib/
   md5.js             vendored pure-JS MD5 (Web Crypto has none)
   model3d.js         pure model-format helpers for the 3D Viewer (no three.js)
   spine.js           pure Spine helpers: version detection, .atlas page parsing, skeleton file grouping (no WebGL)
-  staticPages.js     server-only scan of public/static_pages (uses node:fs)
 public/
-  static_pages/      standalone HTML pages: a folder with index.html, or a loose .html
 docs/
   DESIGN.md          design tokens (colors, spacing, type) — read before touching styles
   DATA-MODEL.md       localStorage shape + how to add a new entity type
@@ -86,8 +85,8 @@ docs/
    DOM/state) — `lib/tools.js` for the Tools and Text Tools pages,
    `lib/color.js` for Color Tools, `lib/spritesheet.js` + `lib/zip.js` for
    Assets Tools. Pages and components only wire them to inputs and buttons.
-   The exceptions are marked in place: `lib/staticPages.js` uses `node:fs`,
-   and `parsePlist` uses `DOMParser`, so both run server/browser-side only.
+   The exception is marked in place: `parsePlist` uses `DOMParser`, so it
+   runs browser-side only.
    Watch the two error conventions: helpers like `convertTimestamp` return an
    error _string_ that the page renders as output, while every Text Tools
    transform (`formatJsonPretty`, `toCamelCase`, `jwtDecode`, ...) _throws_
@@ -106,12 +105,7 @@ docs/
    browser APIs).
 6. Before calling a UI change done, run `npm run build` — the app must
    compile cleanly.
-7. **Adding a static page needs no code change** — drop a folder containing
-   an `index.html` (or a loose `.html` file) into `public/static_pages/` and
-   `/statics` lists it. The list is built when the page renders, so a running
-   dev server picks new files up on refresh; a deployed build needs a
-   redeploy.
-8. **Spine Viewer runtimes are version-locked.** Spine data is not cross-
+7. **Spine Viewer runtimes are version-locked.** Spine data is not cross-
    compatible, so 3.8.99/4.1/4.2 each load their own runtime through
    `components/spine/runtime.js` (4.1/4.2 are the npm aliases `spine41`/
    `spine42`; 3.8 was never published to npm, so its UMD build is vendored at

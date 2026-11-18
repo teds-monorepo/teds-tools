@@ -16,13 +16,13 @@ introducing new values.
 | `muted`   | `#8891ab` | secondary text, labels, timestamps              |
 | `accent`  | `#6c8bff` | primary actions, active nav, Tools + Text Tools |
 | `accent2` | `#3ecf8e` | Assets Tools accent                            |
-| `accent3` | `#b17cff` | Static Pages accent                            |
+| `accent3` | `#b17cff` | tool-icon accent (also the Projects app accent) |
 | `accent4` | `#ff9f5a` | Color Tools accent (and the Timestamp tool)     |
 
 Each section has its own accent — reuse `accent`/`accent2`/`accent3`/`accent4`
-rather than inventing a fifth unless a genuinely new section is added. Static
-Pages is a read-only view of files on disk with no editing affordances, so it
-takes `accent3`; Text Tools is one more tool surface and shares `accent` with
+rather than inventing a fifth unless a genuinely new section is added.
+`accent3` colours tool icons here and is the accent of the separate Projects
+app (`teds-projects`); Text Tools is one more tool surface and shares `accent` with
 Tools; Color Tools uses `accent4` for its chrome so the accent never competes
 with the colors the user is actually picking.
 
@@ -88,9 +88,6 @@ and only the content column scrolling.
     date-and-countdown rail, so its rows wrap the card onto its own line
     (`min-w-[min(180px,100%)]`) when the pane is too narrow for the date
     column and the card side by side.
-- **Static Pages** has no sidebar — there is nothing to edit, so
-  the content pane is a `repeat(auto-fill, minmax(220px, 1fr))` grid of
-  `bg-panel` cards that link straight out to the page (new tab).
 - **Text Tools** and **Color Tools** both use the sidebar too, even
   though neither has saved entries: the list is the tool chooser.
   - Text Tools: one `SubItem` per tool group (JSON, Case, Trim, ...); the

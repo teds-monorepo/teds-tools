@@ -19,7 +19,6 @@ import {
   formatVec3,
   isCompanionFile,
 } from '@/lib/model3d';
-import { downloadBlob } from '@/lib/zip';
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2];
 const SHADING_MODES = [
@@ -51,7 +50,6 @@ export default function Model3dPage() {
   const [seekRequest, setSeekRequest] = useState(null);
   const [resetSignal, setResetSignal] = useState(0);
   const [snapFloorSignal, setSnapFloorSignal] = useState(0);
-  const [snapshotSignal, setSnapshotSignal] = useState(0);
 
   const [wireframe, setWireframe] = useState(false);
   const [shading, setShading] = useState('lit');
@@ -63,7 +61,6 @@ export default function Model3dPage() {
   const [showAxes, setShowAxes] = useState(false);
   const [bg, setBg] = useState(BG_CHOICES[0].id);
   const [inspectorTab, setInspectorTab] = useState('meshes');
-  const [panelOpen, setPanelOpen] = useState(true);
 
   const fileInputRef = useRef(null);
   const playheadsRef = useRef({});
@@ -381,56 +378,7 @@ export default function Model3dPage() {
           <div className="h-full min-h-0 overflow-y-auto lg:overflow-hidden px-4 py-5 pb-16 sm:px-6 lg:p-0">
             <div className="bg-panel border border-border rounded-card p-3.5 sm:p-4.5 flex flex-col gap-3.5 lg:bg-transparent lg:border-0 lg:rounded-none lg:p-0 lg:h-full lg:flex-row lg:gap-0">
               {/* ── Center 3D Preview Stage ─────────────────────────────── */}
-              <div className="flex flex-col gap-3 lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:p-3.5">
-                <div className="flex flex-wrap items-center justify-between gap-2.5 lg:bg-panel lg:border lg:border-border lg:rounded-xl lg:px-3.5 lg:py-2.5 flex-shrink-0">
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-accent3/20 text-accent3 flex-shrink-0">
-                      {active.ext.toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[13.5px] font-medium truncate" title={active.name}>
-                        {active.name}
-                      </div>
-                      <div className="text-[11.5px] text-muted truncate">
-                        {[formatBytes(active.size), describeStats(active.stats)]
-                          .filter(Boolean)
-                          .join(' · ') || 'Loading…'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className={ghostBtnClass}
-                    >
-                      + Add
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSnapshotSignal((n) => n + 1)}
-                      className={ghostBtnClass}
-                    >
-                      Snapshot
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeModel(active.id)}
-                      className={ghostBtnClass}
-                    >
-                      Close
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPanelOpen((v) => !v)}
-                      title={panelOpen ? 'Hide right panel' : 'Show right panel'}
-                      className={`hidden lg:inline-flex ${toggleClass(panelOpen)}`}
-                    >
-                      {panelOpen ? 'Hide Info' : 'Show Info'}
-                    </button>
-                  </div>
-                </div>
-
+              <div className="flex flex-col lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:p-3.5">
                 <div className="h-[380px] sm:h-[440px] lg:h-auto lg:flex-1 lg:min-h-0 bg-bg border border-border rounded-lg lg:rounded-card overflow-hidden">
                   <ModelViewport
                     model={active}
@@ -452,24 +400,16 @@ export default function Model3dPage() {
                     seekRequest={seekRequest}
                     resetSignal={resetSignal}
                     snapFloorSignal={snapFloorSignal}
-                    snapshotSignal={snapshotSignal}
                     onFilesDrop={openFiles}
                     onLoaded={handleLoaded}
                     onTime={handleTime}
-                    onSnapshot={(blob) =>
-                      downloadBlob(blob, `${active.name.replace(/\.[^.]+$/, '')}.png`)
-                    }
                     onError={handleError}
                   />
                 </div>
               </div>
 
               {/* ── Right Inspector & Controls Panel (desktop) / Below (mobile) ── */}
-              <aside
-                className={`flex flex-col gap-3 ${
-                  panelOpen ? 'lg:flex' : 'lg:hidden'
-                } lg:w-[390px] xl:w-[430px] lg:flex-shrink-0 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:bg-panel lg:border-l lg:border-border lg:p-3.5`}
-              >
+              <aside className="flex flex-col gap-3 lg:w-[390px] xl:w-[430px] lg:flex-shrink-0 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:bg-panel lg:border-l lg:border-border lg:p-3.5">
                 <Section
                   title="View"
                   actions={

@@ -44,6 +44,7 @@ export function Sidebar({ title, action, children, activeLabel }) {
             onClick={(e) => {
               if (e.target.closest('button')) setOpen(false);
             }}
+            onDrop={() => setOpen(false)}
           >
             {children}
           </div>
@@ -53,21 +54,55 @@ export function Sidebar({ title, action, children, activeLabel }) {
   );
 }
 
-export function SubItem({ active, onClick, icon, label, sub }) {
+export function SubItem({ active, onClick, onFilesDrop, dropSub, icon, label, sub }) {
+  const [dragOver, setDragOver] = useState(false);
+
+  const dropHandlers = onFilesDrop
+    ? {
+        onDragOver: (e) => {
+          e.preventDefault();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+          if (!dragOver) setDragOver(true);
+        },
+        onDragLeave: (e) => {
+          if (e.currentTarget.contains(e.relatedTarget)) return;
+          setDragOver(false);
+        },
+        onDrop: (e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer?.files?.length) onFilesDrop(e.dataTransfer.files);
+        },
+      }
+    : {};
+
+  const displaySub = dragOver && dropSub ? dropSub : sub;
+
   return (
     <button
       type="button"
       onClick={onClick}
+      {...dropHandlers}
       className={`w-full text-left flex items-start gap-2.5 px-2.5 py-2 rounded-[9px] border ${
-        active
-          ? 'bg-accent/[0.14] border-accent/30 text-text'
-          : 'border-transparent text-muted hover:text-text hover:bg-panel'
+        dragOver
+          ? 'border-dashed border-accent bg-accent/[0.12] text-text'
+          : active
+            ? 'bg-accent/[0.14] border-accent/30 text-text'
+            : 'border-transparent text-muted hover:text-text hover:bg-panel'
       }`}
     >
       {icon}
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] font-medium truncate">{label}</span>
-        {sub ? <span className="block text-[11px] text-muted truncate mt-0.5">{sub}</span> : null}
+        {displaySub ? (
+          <span
+            className={`block text-[11px] truncate mt-0.5 ${
+              dragOver ? 'text-accent' : 'text-muted'
+            }`}
+          >
+            {displaySub}
+          </span>
+        ) : null}
       </span>
     </button>
   );

@@ -445,14 +445,27 @@ export default function ModelViewport({
           Drop 3D model files to open
         </div>
       )}
-      <button
-        type="button"
-        title="Fit the model inside the view"
-        onClick={() => stateRef.current && fitCamera(stateRef.current, 'iso')}
-        className="absolute bottom-2 right-2 bg-panel/80 border border-border text-muted hover:text-text px-2.5 py-1.5 rounded-lg text-[12px] backdrop-blur-sm"
-      >
-        ⤢ Fit
-      </button>
+      <div className="hidden sm:block absolute bottom-2.5 left-2.5 pointer-events-none bg-panel/75 border border-border/80 text-muted px-2.5 py-1 rounded-lg text-[11px] backdrop-blur-sm">
+        Drag orbit · Scroll zoom · Right-drag pan
+      </div>
+      <div className="absolute bottom-2.5 right-2.5 flex items-center gap-0.5 bg-panel/85 border border-border p-0.5 rounded-lg backdrop-blur-sm">
+        {[
+          ['front', 'Front'],
+          ['right', 'Side'],
+          ['top', 'Top'],
+          ['iso', '⤢ Fit'],
+        ].map(([preset, label]) => (
+          <button
+            key={preset}
+            type="button"
+            title={`Camera: ${label}`}
+            onClick={() => stateRef.current && fitCamera(stateRef.current, preset)}
+            className="text-muted hover:text-text hover:bg-panel2 px-2 py-1 rounded-md text-[11.5px]"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -27,12 +27,6 @@ const SHADING_MODES = [
   { id: 'unlit', label: 'Unlit' },
   { id: 'normals', label: 'Normals' },
 ];
-const CAMERA_PRESETS = [
-  { id: 'front', label: 'Front' },
-  { id: 'right', label: 'Side' },
-  { id: 'top', label: 'Top' },
-  { id: 'iso', label: 'Reset camera' },
-];
 const BG_CHOICES = [
   { id: '#0b0e1a', label: 'Dark' },
   { id: '#1a1f33', label: 'Panel' },
@@ -41,9 +35,9 @@ const BG_CHOICES = [
 ];
 
 const ghostBtnClass =
-  'bg-transparent border border-border text-muted hover:text-text px-2.5 py-1.5 rounded-lg text-[12.5px]';
+  'bg-transparent border border-border text-muted hover:text-text px-2.5 py-1.5 rounded-lg text-[12px]';
 const toggleClass = (on) =>
-  `px-2.5 py-1.5 rounded-lg text-[12.5px] border ${
+  `px-2.5 py-1.5 rounded-lg text-[12px] border ${
     on ? 'bg-accent/[0.14] border-accent/40 text-text' : ghostBtnClass
   }`;
 
@@ -57,7 +51,6 @@ export default function Model3dPage() {
   const [seekRequest, setSeekRequest] = useState(null);
   const [resetSignal, setResetSignal] = useState(0);
   const [snapFloorSignal, setSnapFloorSignal] = useState(0);
-  const [cameraView, setCameraView] = useState(null);
   const [snapshotSignal, setSnapshotSignal] = useState(0);
 
   const [wireframe, setWireframe] = useState(false);
@@ -70,6 +63,7 @@ export default function Model3dPage() {
   const [showAxes, setShowAxes] = useState(false);
   const [bg, setBg] = useState(BG_CHOICES[0].id);
   const [inspectorTab, setInspectorTab] = useState('meshes');
+  const [panelOpen, setPanelOpen] = useState(true);
 
   const fileInputRef = useRef(null);
   const playheadsRef = useRef({});
@@ -357,401 +351,429 @@ export default function Model3dPage() {
         ))}
       </Sidebar>
 
-      <ContentPane>
-        <div className="bg-panel border border-border rounded-card px-4.5 pt-4.5 pb-4.5 flex flex-col gap-3.5">
-          {!active ? (
-            <DropZone onFiles={openFiles} accept={ACCEPT_ATTR} icon="◈" multiple>
-              <div className="text-[13.5px] font-medium">Drop a 3D model here</div>
-              <div className="text-[12px] text-muted">
-                .glb .gltf .obj .stl .fbx — drop several to keep them side by side
-              </div>
-              <div className="text-[11.5px] text-muted">
-                For .obj, drop the .mtl and its textures with it · you can also drop onto Open model
-                in the sidebar
-              </div>
-            </DropZone>
-          ) : (
-            <>
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-[13.5px] font-medium truncate" title={active.name}>
-                    {active.name}
-                  </div>
-                  <div className="text-[11.5px] text-muted">
-                    {[
-                      active.ext.toUpperCase(),
-                      formatBytes(active.size),
-                      describeStats(active.stats),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </div>
+      <ContentPane padded={false} scroll={false}>
+        {!active ? (
+          <div className="h-full overflow-y-auto px-4 py-5 pb-16 sm:px-6 lg:p-5 flex flex-col">
+            <div className="bg-panel border border-border rounded-card p-4.5 lg:flex-1 lg:min-h-[360px] flex flex-col">
+              <DropZone
+                onFiles={openFiles}
+                accept={ACCEPT_ATTR}
+                icon="◈"
+                multiple
+                className="lg:flex-1"
+              >
+                <div className="text-[14px] font-medium">Drop a 3D model here</div>
+                <div className="text-[12.5px] text-muted">
+                  .glb .gltf .obj .stl .fbx — drop several to keep them side by side
                 </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className={ghostBtnClass}
-                  >
-                    + Add model
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSnapshotSignal((n) => n + 1)}
-                    className={ghostBtnClass}
-                  >
-                    Snapshot PNG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeModel(active.id)}
-                    className={ghostBtnClass}
-                  >
-                    Close
-                  </button>
+                <div className="text-[11.5px] text-muted">
+                  For .obj, drop the .mtl and its textures with it · you can also drop onto Open
+                  model in the sidebar
                 </div>
-              </div>
-
-              <div className="h-[460px] min-h-[320px] bg-bg border border-border rounded-lg overflow-hidden">
-                <ModelViewport
-                  model={active}
-                  openIds={openIds}
-                  startTime={playheadsRef.current[active.id] ?? 0}
-                  playing={playing}
-                  clipIndex={clipIndex}
-                  speed={speed}
-                  wireframe={wireframe}
-                  shading={shading}
-                  doubleSided={doubleSided}
-                  showBounds={showBounds}
-                  showSkeleton={showSkeleton}
-                  hiddenMeshes={hiddenMeshes}
-                  autoRotate={autoRotate}
-                  showGrid={showGrid}
-                  showAxes={showAxes}
-                  bg={bg}
-                  seekRequest={seekRequest}
-                  cameraView={cameraView}
-                  resetSignal={resetSignal}
-                  snapFloorSignal={snapFloorSignal}
-                  snapshotSignal={snapshotSignal}
-                  onFilesDrop={openFiles}
-                  onLoaded={handleLoaded}
-                  onTime={handleTime}
-                  onSnapshot={(blob) =>
-                    downloadBlob(blob, `${active.name.replace(/\.[^.]+$/, '')}.png`)
-                  }
-                  onError={handleError}
-                />
-              </div>
-
-              <Section
-                title="View"
-                actions={
-                  <div className="flex flex-wrap items-center gap-1.5">
+              </DropZone>
+            </div>
+          </div>
+        ) : (
+          /* Mobile (<lg): stacked card inside a single scrolling column (same feel as before).
+             Desktop (lg+): full-height split — large 3D preview in the center, scrollable
+             inspector & controls panel pinned on the right. Single <ModelViewport> instance
+             so WebGL state/camera survive window resizes and panel toggles. */
+          <div className="h-full min-h-0 overflow-y-auto lg:overflow-hidden px-4 py-5 pb-16 sm:px-6 lg:p-0">
+            <div className="bg-panel border border-border rounded-card p-3.5 sm:p-4.5 flex flex-col gap-3.5 lg:bg-transparent lg:border-0 lg:rounded-none lg:p-0 lg:h-full lg:flex-row lg:gap-0">
+              {/* ── Center 3D Preview Stage ─────────────────────────────── */}
+              <div className="flex flex-col gap-3 lg:flex-1 lg:min-w-0 lg:min-h-0 lg:h-full lg:p-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 lg:bg-panel lg:border lg:border-border lg:rounded-xl lg:px-3.5 lg:py-2.5 flex-shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-accent3/20 text-accent3 flex-shrink-0">
+                      {active.ext.toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[13.5px] font-medium truncate" title={active.name}>
+                        {active.name}
+                      </div>
+                      <div className="text-[11.5px] text-muted truncate">
+                        {[formatBytes(active.size), describeStats(active.stats)]
+                          .filter(Boolean)
+                          .join(' · ') || 'Loading…'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
                       type="button"
-                      onClick={() => setSnapFloorSignal((n) => n + 1)}
-                      title="Align the current pose flush onto the bottom grid plane"
+                      onClick={() => fileInputRef.current?.click()}
                       className={ghostBtnClass}
                     >
-                      Snap to floor
+                      + Add
                     </button>
-                    {CAMERA_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() =>
-                          p.id === 'iso'
-                            ? setResetSignal((n) => n + 1)
-                            : setCameraView({ preset: p.id, nonce: Date.now() })
-                        }
-                        className={ghostBtnClass}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                }
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1 mr-1">
-                    {SHADING_MODES.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setShading(m.id)}
-                        className={toggleClass(shading === m.id)}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setWireframe((v) => !v)}
-                    className={toggleClass(wireframe)}
-                  >
-                    Wireframe
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDoubleSided((v) => !v)}
-                    className={toggleClass(doubleSided)}
-                  >
-                    Double-sided
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowBounds((v) => !v)}
-                    className={toggleClass(showBounds)}
-                  >
-                    Bounds
-                  </button>
-                  {stats?.bones > 0 && (
                     <button
                       type="button"
-                      onClick={() => setShowSkeleton((v) => !v)}
-                      className={toggleClass(showSkeleton)}
+                      onClick={() => setSnapshotSignal((n) => n + 1)}
+                      className={ghostBtnClass}
                     >
-                      Skeleton
+                      Snapshot
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setAutoRotate((v) => !v)}
-                    className={toggleClass(autoRotate)}
-                  >
-                    Auto-rotate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowGrid((v) => !v)}
-                    className={toggleClass(showGrid)}
-                  >
-                    Grid
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAxes((v) => !v)}
-                    className={toggleClass(showAxes)}
-                  >
-                    Axes
-                  </button>
-                  <div className="flex items-center gap-1 ml-1">
-                    {BG_CHOICES.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        title={c.label}
-                        onClick={() => setBg(c.id)}
-                        className={`w-6 h-6 rounded-md border ${
-                          bg === c.id ? 'border-accent' : 'border-border'
-                        }`}
-                        style={{ backgroundColor: c.id }}
-                      />
-                    ))}
+                    <button
+                      type="button"
+                      onClick={() => removeModel(active.id)}
+                      className={ghostBtnClass}
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPanelOpen((v) => !v)}
+                      title={panelOpen ? 'Hide right panel' : 'Show right panel'}
+                      className={`hidden lg:inline-flex ${toggleClass(panelOpen)}`}
+                    >
+                      {panelOpen ? 'Hide Info' : 'Show Info'}
+                    </button>
                   </div>
                 </div>
-                <div className="text-[11.5px] text-muted mt-2">
-                  Drag to orbit · scroll to zoom · right-drag to pan · drop files onto viewport or
-                  sidebar to open
-                </div>
-              </Section>
 
-              <Section title="Animation">
-                {clips.length === 0 ? (
-                  <div className="text-[12.5px] text-muted">This model has no animation clips.</div>
-                ) : (
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="h-[380px] sm:h-[440px] lg:h-auto lg:flex-1 lg:min-h-0 bg-bg border border-border rounded-lg lg:rounded-card overflow-hidden">
+                  <ModelViewport
+                    model={active}
+                    openIds={openIds}
+                    startTime={playheadsRef.current[active.id] ?? 0}
+                    playing={playing}
+                    clipIndex={clipIndex}
+                    speed={speed}
+                    wireframe={wireframe}
+                    shading={shading}
+                    doubleSided={doubleSided}
+                    showBounds={showBounds}
+                    showSkeleton={showSkeleton}
+                    hiddenMeshes={hiddenMeshes}
+                    autoRotate={autoRotate}
+                    showGrid={showGrid}
+                    showAxes={showAxes}
+                    bg={bg}
+                    seekRequest={seekRequest}
+                    resetSignal={resetSignal}
+                    snapFloorSignal={snapFloorSignal}
+                    snapshotSignal={snapshotSignal}
+                    onFilesDrop={openFiles}
+                    onLoaded={handleLoaded}
+                    onTime={handleTime}
+                    onSnapshot={(blob) =>
+                      downloadBlob(blob, `${active.name.replace(/\.[^.]+$/, '')}.png`)
+                    }
+                    onError={handleError}
+                  />
+                </div>
+              </div>
+
+              {/* ── Right Inspector & Controls Panel (desktop) / Below (mobile) ── */}
+              <aside
+                className={`flex flex-col gap-3 ${
+                  panelOpen ? 'lg:flex' : 'lg:hidden'
+                } lg:w-[390px] xl:w-[430px] lg:flex-shrink-0 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:bg-panel lg:border-l lg:border-border lg:p-3.5`}
+              >
+                <Section
+                  title="View"
+                  actions={
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => patchModel(active.id, { playing: !playing })}
-                        className="bg-accent2 text-bg px-3.5 py-1.5 rounded-lg text-[12.5px] font-semibold hover:brightness-110 w-[76px]"
+                        onClick={() => setSnapFloorSignal((n) => n + 1)}
+                        title="Align the current pose flush onto the bottom grid plane"
+                        className={ghostBtnClass}
                       >
-                        {playing ? '❚❚ Pause' : '▶ Play'}
+                        Snap floor
                       </button>
-                      <select
-                        value={clipIndex}
-                        onChange={(e) => changeClip(Number(e.target.value))}
-                        className="bg-bg border border-border rounded-lg px-2 py-1.5 text-[12.5px] max-w-[240px]"
+                      <button
+                        type="button"
+                        onClick={() => setResetSignal((n) => n + 1)}
+                        className={ghostBtnClass}
                       >
-                        {clips.map((c, i) => (
-                          <option key={`${c.name}-${i}`} value={i}>
-                            {c.name} ({formatTime(c.duration)})
-                          </option>
+                        Reset
+                      </button>
+                    </div>
+                  }
+                >
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        {SHADING_MODES.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setShading(m.id)}
+                            className={toggleClass(shading === m.id)}
+                          >
+                            {m.label}
+                          </button>
                         ))}
-                      </select>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {BG_CHOICES.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            title={`Background: ${c.label}`}
+                            onClick={() => setBg(c.id)}
+                            className={`w-6 h-6 rounded-md border ${
+                              bg === c.id ? 'border-accent' : 'border-border'
+                            }`}
+                            style={{ backgroundColor: c.id }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setWireframe((v) => !v)}
+                        className={toggleClass(wireframe)}
+                      >
+                        Wireframe
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDoubleSided((v) => !v)}
+                        className={toggleClass(doubleSided)}
+                      >
+                        2-Sided
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowBounds((v) => !v)}
+                        className={toggleClass(showBounds)}
+                      >
+                        Bounds
+                      </button>
+                      {stats?.bones > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowSkeleton((v) => !v)}
+                          className={toggleClass(showSkeleton)}
+                        >
+                          Skeleton
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setAutoRotate((v) => !v)}
+                        className={toggleClass(autoRotate)}
+                      >
+                        Auto-rotate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowGrid((v) => !v)}
+                        className={toggleClass(showGrid)}
+                      >
+                        Grid
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAxes((v) => !v)}
+                        className={toggleClass(showAxes)}
+                      >
+                        Axes
+                      </button>
+                    </div>
+                  </div>
+                </Section>
+
+                {clips.length > 0 && (
+                  <Section title="Animation">
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => patchModel(active.id, { playing: !playing })}
+                          className="bg-accent2 text-bg px-3 py-1.5 rounded-lg text-[12px] font-semibold hover:brightness-110 w-[74px] flex-shrink-0"
+                        >
+                          {playing ? '❚❚ Pause' : '▶ Play'}
+                        </button>
+                        <select
+                          value={clipIndex}
+                          onChange={(e) => changeClip(Number(e.target.value))}
+                          className="bg-bg border border-border rounded-lg px-2 py-1.5 text-[12px] flex-1 min-w-0"
+                        >
+                          {clips.map((c, i) => (
+                            <option key={`${c.name}-${i}`} value={i}>
+                              {c.name} ({formatTime(c.duration)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <div className="flex items-center gap-1">
                         {SPEEDS.map((s) => (
                           <button
                             key={s}
                             type="button"
                             onClick={() => setSpeed(s)}
-                            className={toggleClass(speed === s)}
+                            className={`flex-1 ${toggleClass(speed === s)}`}
                           >
                             {s}×
                           </button>
                         ))}
                       </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-muted tabular-nums w-[46px]">
+                          {formatTime(playhead.current)}
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={Math.max(duration, 0.001)}
+                          step={0.01}
+                          value={Math.min(playhead.current, duration)}
+                          onChange={(e) => seek(Number(e.target.value))}
+                          disabled={!duration}
+                          className="flex-1 min-w-0 accent-accent2"
+                        />
+                        <span className="text-[11px] text-muted tabular-nums w-[46px] text-right">
+                          {formatTime(duration)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-[11.5px] text-muted tabular-nums w-[52px]">
-                        {formatTime(playhead.current)}
-                      </span>
-                      <input
-                        type="range"
-                        min={0}
-                        max={Math.max(duration, 0.001)}
-                        step={0.01}
-                        value={Math.min(playhead.current, duration)}
-                        onChange={(e) => seek(Number(e.target.value))}
-                        disabled={!duration}
-                        className="flex-1 accent-accent2"
-                      />
-                      <span className="text-[11.5px] text-muted tabular-nums w-[52px] text-right">
-                        {formatTime(duration)}
-                      </span>
-                    </div>
-                  </div>
+                  </Section>
                 )}
-              </Section>
 
-              <Section
-                title="Model Specifications"
-                actions={
-                  stats ? (
-                    <div className="flex items-center gap-1.5">
-                      {hiddenMeshes.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => patchModel(active.id, { hiddenMeshes: [] })}
-                          className={ghostBtnClass}
-                        >
-                          Show all meshes ({hiddenMeshes.length} hidden)
+                <Section
+                  title="Model Specifications"
+                  actions={
+                    stats ? (
+                      <div className="flex items-center gap-1.5">
+                        {hiddenMeshes.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => patchModel(active.id, { hiddenMeshes: [] })}
+                            className={ghostBtnClass}
+                          >
+                            Show all ({hiddenMeshes.length})
+                          </button>
+                        )}
+                        <button type="button" onClick={copySpecsJson} className={ghostBtnClass}>
+                          Copy JSON
                         </button>
-                      )}
-                      <button type="button" onClick={copySpecsJson} className={ghostBtnClass}>
-                        Copy JSON
-                      </button>
-                    </div>
-                  ) : null
-                }
-              >
-                {!stats ? (
-                  <div className="text-[12.5px] text-muted">Inspecting model…</div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                      <StatCard
-                        label="Vertices"
-                        value={formatNumber(stats.vertices)}
-                        sub={`${formatNumber(stats.triangles)} triangles`}
-                      />
-                      <StatCard
-                        label="Meshes"
-                        value={formatNumber(stats.meshes)}
-                        sub={
-                          stats.skinnedMeshes
-                            ? `${stats.skinnedMeshes} skinned · ${stats.nodes} nodes`
-                            : `${formatNumber(stats.nodes)} scene nodes`
-                        }
-                      />
-                      <StatCard
-                        label="Materials"
-                        value={formatNumber(stats.materials)}
-                        sub={`${formatNumber(stats.textures)} texture${stats.textures === 1 ? '' : 's'}`}
-                      />
-                      <StatCard
-                        label="Skeleton & Anim"
-                        value={stats.bones ? `${formatNumber(stats.bones)} bones` : 'Static'}
-                        sub={[
-                          `${stats.animations} clip${stats.animations === 1 ? '' : 's'}`,
-                          stats.morphTargets ? `${stats.morphTargets} morphs` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      />
-                      <StatCard
-                        label="Dimensions (W×H×D)"
-                        value={formatDimensions(stats.dimensions)}
-                        sub={`View scale ${formatScale(stats.normalizedScale)}`}
-                      />
-                      <StatCard
-                        label="Bounds Y / Center"
-                        value={
-                          stats.bounds
-                            ? `${formatCoord(stats.bounds.min.y)} → ${formatCoord(stats.bounds.max.y)}`
-                            : '—'
-                        }
-                        sub={stats.bounds ? `Center (${formatVec3(stats.bounds.center)})` : ''}
-                      />
-                    </div>
+                      </div>
+                    ) : null
+                  }
+                >
+                  {!stats ? (
+                    <div className="text-[12.5px] text-muted">Inspecting model…</div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <StatCard
+                          label="Vertices"
+                          value={formatNumber(stats.vertices)}
+                          sub={`${formatNumber(stats.triangles)} triangles`}
+                        />
+                        <StatCard
+                          label="Meshes"
+                          value={formatNumber(stats.meshes)}
+                          sub={
+                            stats.skinnedMeshes
+                              ? `${stats.skinnedMeshes} skinned · ${stats.nodes} nodes`
+                              : `${formatNumber(stats.nodes)} scene nodes`
+                          }
+                        />
+                        <StatCard
+                          label="Materials"
+                          value={formatNumber(stats.materials)}
+                          sub={`${formatNumber(stats.textures)} texture${stats.textures === 1 ? '' : 's'}`}
+                        />
+                        <StatCard
+                          label="Skeleton & Anim"
+                          value={stats.bones ? `${formatNumber(stats.bones)} bones` : 'Static'}
+                          sub={[
+                            `${stats.animations} clip${stats.animations === 1 ? '' : 's'}`,
+                            stats.morphTargets ? `${stats.morphTargets} morphs` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        />
+                        <StatCard
+                          label="Dimensions (W×H×D)"
+                          value={formatDimensions(stats.dimensions)}
+                          sub={`View scale ${formatScale(stats.normalizedScale)}`}
+                        />
+                        <StatCard
+                          label="Bounds Y / Center"
+                          value={
+                            stats.bounds
+                              ? `${formatCoord(stats.bounds.min.y)} → ${formatCoord(stats.bounds.max.y)}`
+                              : '—'
+                          }
+                          sub={stats.bounds ? `Center (${formatVec3(stats.bounds.center)})` : ''}
+                        />
+                      </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                      <Chip accent>
-                        {active.ext.toUpperCase()} · {formatBytes(active.size)}
-                      </Chip>
-                      {stats.formatInfo?.version && <Chip>glTF {stats.formatInfo.version}</Chip>}
-                      {stats.formatInfo?.generator && (
-                        <Chip title={stats.formatInfo.generator}>{stats.formatInfo.generator}</Chip>
-                      )}
-                      {stats.bounds && (
-                        <Chip>
-                          Min ({formatVec3(stats.bounds.min)}) · Max ({formatVec3(stats.bounds.max)}
-                          )
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <Chip accent>
+                          {active.ext.toUpperCase()} · {formatBytes(active.size)}
                         </Chip>
+                        {stats.formatInfo?.version && <Chip>glTF {stats.formatInfo.version}</Chip>}
+                        {stats.formatInfo?.generator && (
+                          <Chip title={stats.formatInfo.generator}>
+                            {stats.formatInfo.generator}
+                          </Chip>
+                        )}
+                        {stats.bounds && (
+                          <Chip
+                            title={`Min (${formatVec3(stats.bounds.min)}) · Max (${formatVec3(stats.bounds.max)})`}
+                          >
+                            Min ({formatVec3(stats.bounds.min)}) · Max (
+                            {formatVec3(stats.bounds.max)})
+                          </Chip>
+                        )}
+                        {stats.attributes?.map((attr) => (
+                          <Chip key={attr}>{formatAttributeName(attr)}</Chip>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-1.5 pt-2.5 border-t border-border">
+                        {[
+                          ['meshes', `Meshes (${stats.meshList?.length || 0})`],
+                          ['materials', `Materials (${stats.materialList?.length || 0})`],
+                          ['textures', `Textures (${stats.textureList?.length || 0})`],
+                          ['clips', `Clips (${stats.clipList?.length || 0})`],
+                        ].map(([id, label]) => (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setInspectorTab((cur) => (cur === id ? null : id))}
+                            className={toggleClass(inspectorTab === id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {inspectorTab === 'meshes' && (
+                        <MeshList
+                          meshes={stats.meshList || []}
+                          hiddenMeshes={hiddenMeshes}
+                          onToggleMesh={toggleMeshVisibility}
+                        />
                       )}
-                      {stats.attributes?.map((attr) => (
-                        <Chip key={attr}>{formatAttributeName(attr)}</Chip>
-                      ))}
+                      {inspectorTab === 'materials' && (
+                        <MaterialList materials={stats.materialList || []} />
+                      )}
+                      {inspectorTab === 'textures' && (
+                        <TextureList textures={stats.textureList || []} />
+                      )}
+                      {inspectorTab === 'clips' && (
+                        <ClipList
+                          clips={stats.clipList || []}
+                          activeIndex={clipIndex}
+                          onSelect={changeClip}
+                        />
+                      )}
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border">
-                      {[
-                        ['meshes', `Meshes (${stats.meshList?.length || 0})`],
-                        ['materials', `Materials (${stats.materialList?.length || 0})`],
-                        ['textures', `Textures (${stats.textureList?.length || 0})`],
-                        ['clips', `Animations (${stats.clipList?.length || 0})`],
-                      ].map(([id, label]) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => setInspectorTab((cur) => (cur === id ? null : id))}
-                          className={toggleClass(inspectorTab === id)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {inspectorTab === 'meshes' && (
-                      <MeshTable
-                        meshes={stats.meshList || []}
-                        hiddenMeshes={hiddenMeshes}
-                        onToggleMesh={toggleMeshVisibility}
-                      />
-                    )}
-                    {inspectorTab === 'materials' && (
-                      <MaterialTable materials={stats.materialList || []} />
-                    )}
-                    {inspectorTab === 'textures' && (
-                      <TextureTable textures={stats.textureList || []} />
-                    )}
-                    {inspectorTab === 'clips' && (
-                      <ClipTable
-                        clips={stats.clipList || []}
-                        activeIndex={clipIndex}
-                        onSelect={changeClip}
-                      />
-                    )}
-                  </div>
-                )}
-              </Section>
-            </>
-          )}
-        </div>
+                  )}
+                </Section>
+              </aside>
+            </div>
+          </div>
+        )}
         <Toast toast={toast} />
       </ContentPane>
     </>
@@ -760,10 +782,10 @@ export default function Model3dPage() {
 
 function StatCard({ label, value, sub }) {
   return (
-    <div className="bg-bg border border-border rounded-lg px-3 py-2.5 min-w-0">
+    <div className="bg-bg border border-border rounded-lg px-3 py-2 min-w-0">
       <div className="text-[10px] uppercase tracking-wider text-muted truncate">{label}</div>
       <div
-        className="text-[13.5px] font-semibold text-text tabular-nums truncate mt-0.5"
+        className="text-[13px] font-semibold text-text tabular-nums truncate mt-0.5"
         title={value}
       >
         {value}
@@ -781,7 +803,7 @@ function Chip({ children, accent = false, title }) {
   return (
     <span
       title={title}
-      className={`px-2 py-0.5 rounded-md border max-w-[320px] truncate ${
+      className={`px-2 py-0.5 rounded-md border max-w-full truncate ${
         accent
           ? 'bg-accent3/15 border-accent3/30 text-accent3 font-medium'
           : 'bg-bg border-border text-muted'
@@ -792,227 +814,160 @@ function Chip({ children, accent = false, title }) {
   );
 }
 
-function MeshTable({ meshes, hiddenMeshes, onToggleMesh }) {
+function MeshList({ meshes, hiddenMeshes, onToggleMesh }) {
   if (!meshes.length) {
-    return <div className="text-[12.5px] text-muted">No meshes found in scene.</div>;
+    return <div className="text-[12px] text-muted">No meshes found in scene.</div>;
   }
   return (
-    <div className="overflow-x-auto border border-border rounded-lg bg-bg">
-      <table className="w-full text-left text-[12px] border-collapse">
-        <thead>
-          <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted">
-            <th className="py-2 px-2.5 w-14">Show</th>
-            <th className="py-2 px-2.5">Mesh</th>
-            <th className="py-2 px-2.5">Type</th>
-            <th className="py-2 px-2.5 text-right">Verts</th>
-            <th className="py-2 px-2.5 text-right">Tris</th>
-            <th className="py-2 px-2.5">Materials</th>
-            <th className="py-2 px-2.5">Attributes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {meshes.map((m) => {
-            const hidden = hiddenMeshes.includes(m.key);
-            return (
-              <tr
-                key={m.key}
-                className={`border-b last:border-b-0 border-border/60 ${
-                  hidden ? 'opacity-50' : ''
+    <div className="border border-border rounded-lg bg-bg divide-y divide-border/60">
+      {meshes.map((m) => {
+        const hidden = hiddenMeshes.includes(m.key);
+        return (
+          <div
+            key={m.key}
+            className={`px-2.5 py-2 flex flex-col gap-1 ${hidden ? 'opacity-50' : ''}`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={() => onToggleMesh(m.key)}
+                title={hidden ? 'Show mesh' : 'Hide mesh'}
+                className={`px-1.5 py-0.5 rounded border text-[10.5px] flex-shrink-0 ${
+                  hidden
+                    ? 'border-border text-muted hover:text-text'
+                    : 'border-accent2/40 bg-accent2/15 text-accent2'
                 }`}
               >
-                <td className="py-1.5 px-2.5">
-                  <button
-                    type="button"
-                    onClick={() => onToggleMesh(m.key)}
-                    title={hidden ? 'Show mesh' : 'Hide mesh'}
-                    className={`px-2 py-0.5 rounded border text-[11px] ${
-                      hidden
-                        ? 'border-border text-muted hover:text-text'
-                        : 'border-accent2/40 bg-accent2/15 text-accent2'
-                    }`}
-                  >
-                    {hidden ? 'Off' : 'On'}
-                  </button>
-                </td>
-                <td className="py-1.5 px-2.5 font-medium max-w-[200px] truncate" title={m.name}>
-                  {m.name}
-                </td>
-                <td className="py-1.5 px-2.5 text-muted whitespace-nowrap">{m.type}</td>
-                <td className="py-1.5 px-2.5 text-right tabular-nums">
-                  {formatNumber(m.vertices)}
-                </td>
-                <td className="py-1.5 px-2.5 text-right tabular-nums">
-                  {formatNumber(m.triangles)}
-                </td>
-                <td
-                  className="py-1.5 px-2.5 text-muted max-w-[180px] truncate"
-                  title={m.materials.join(', ')}
-                >
-                  {m.materials.join(', ') || '—'}
-                </td>
-                <td className="py-1.5 px-2.5 text-muted">
-                  {m.attributes.map(formatAttributeName).join(', ')}
-                  {m.morphTargets ? ` · ${m.morphTargets} morph` : ''}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function MaterialTable({ materials }) {
-  if (!materials.length) {
-    return <div className="text-[12.5px] text-muted">No materials found.</div>;
-  }
-  return (
-    <div className="overflow-x-auto border border-border rounded-lg bg-bg">
-      <table className="w-full text-left text-[12px] border-collapse">
-        <thead>
-          <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted">
-            <th className="py-2 px-2.5">Material</th>
-            <th className="py-2 px-2.5">Shader</th>
-            <th className="py-2 px-2.5">Color</th>
-            <th className="py-2 px-2.5 text-right">Rough / Metal</th>
-            <th className="py-2 px-2.5">Flags</th>
-            <th className="py-2 px-2.5">Texture Maps</th>
-          </tr>
-        </thead>
-        <tbody>
-          {materials.map((m, i) => (
-            <tr key={`${m.name}-${i}`} className="border-b last:border-b-0 border-border/60">
-              <td className="py-1.5 px-2.5 font-medium max-w-[200px] truncate" title={m.name}>
+                {hidden ? 'Off' : 'On'}
+              </button>
+              <span className="text-[12.5px] font-medium truncate flex-1 min-w-0" title={m.name}>
                 {m.name}
-              </td>
-              <td className="py-1.5 px-2.5 text-muted whitespace-nowrap">{m.type}</td>
-              <td className="py-1.5 px-2.5 whitespace-nowrap">
-                {m.color ? (
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted">
-                    <span
-                      className="w-3.5 h-3.5 rounded border border-border inline-block"
-                      style={{ backgroundColor: m.color }}
-                    />
-                    {m.color}
-                  </span>
-                ) : (
-                  <span className="text-muted">—</span>
-                )}
-              </td>
-              <td className="py-1.5 px-2.5 text-right tabular-nums text-muted whitespace-nowrap">
-                {m.roughness != null || m.metalness != null
-                  ? `${m.roughness ?? '—'} / ${m.metalness ?? '—'}`
-                  : '—'}
-              </td>
-              <td className="py-1.5 px-2.5 text-muted whitespace-nowrap">
-                {[
-                  m.doubleSided ? '2-Sided' : 'Front',
-                  m.transparent ? `Blend (${m.opacity})` : null,
-                  m.alphaTest ? `Cutout (${m.alphaTest})` : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </td>
-              <td className="py-1.5 px-2.5 text-muted">{m.maps.join(', ') || 'None'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </span>
+              <span className="text-[11px] text-muted tabular-nums flex-shrink-0">
+                {formatNumber(m.vertices)}v · {formatNumber(m.triangles)}t
+              </span>
+            </div>
+            <div className="text-[11px] text-muted truncate" title={m.materials.join(', ')}>
+              {[
+                m.type,
+                m.materials.length ? m.materials.join(', ') : null,
+                m.attributes.map(formatAttributeName).join(', '),
+                m.morphTargets ? `${m.morphTargets} morph` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function TextureTable({ textures }) {
+function MaterialList({ materials }) {
+  if (!materials.length) {
+    return <div className="text-[12px] text-muted">No materials found.</div>;
+  }
+  return (
+    <div className="border border-border rounded-lg bg-bg divide-y divide-border/60">
+      {materials.map((m, i) => (
+        <div key={`${m.name}-${i}`} className="px-2.5 py-2 flex flex-col gap-1">
+          <div className="flex items-center gap-2 min-w-0">
+            {m.color ? (
+              <span
+                className="w-3.5 h-3.5 rounded border border-border flex-shrink-0"
+                style={{ backgroundColor: m.color }}
+                title={m.color}
+              />
+            ) : null}
+            <span className="text-[12.5px] font-medium truncate flex-1 min-w-0" title={m.name}>
+              {m.name}
+            </span>
+            <span className="text-[11px] text-muted flex-shrink-0">{m.type}</span>
+          </div>
+          <div className="text-[11px] text-muted truncate">
+            {[
+              m.color,
+              m.roughness != null || m.metalness != null
+                ? `R ${m.roughness ?? '—'} / M ${m.metalness ?? '—'}`
+                : null,
+              m.doubleSided ? '2-Sided' : 'Front',
+              m.transparent ? `Blend (${m.opacity})` : null,
+              m.alphaTest ? `Cutout (${m.alphaTest})` : null,
+              m.maps.length ? m.maps.join(', ') : 'No maps',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TextureList({ textures }) {
   if (!textures.length) {
-    return <div className="text-[12.5px] text-muted">No textures embedded or attached.</div>;
+    return <div className="text-[12px] text-muted">No textures embedded or attached.</div>;
   }
   return (
-    <div className="overflow-x-auto border border-border rounded-lg bg-bg">
-      <table className="w-full text-left text-[12px] border-collapse">
-        <thead>
-          <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted">
-            <th className="py-2 px-2.5">Texture</th>
-            <th className="py-2 px-2.5">Used As</th>
-            <th className="py-2 px-2.5 text-right">Resolution</th>
-            <th className="py-2 px-2.5">Color Space</th>
-          </tr>
-        </thead>
-        <tbody>
-          {textures.map((t, i) => (
-            <tr key={`${t.name}-${i}`} className="border-b last:border-b-0 border-border/60">
-              <td className="py-1.5 px-2.5 font-medium max-w-[220px] truncate" title={t.name}>
-                {t.name}
-              </td>
-              <td className="py-1.5 px-2.5 text-muted">{t.slots.join(', ') || '—'}</td>
-              <td className="py-1.5 px-2.5 text-right tabular-nums whitespace-nowrap">
-                {t.width && t.height ? `${t.width} × ${t.height}` : '—'}
-              </td>
-              <td className="py-1.5 px-2.5 text-muted whitespace-nowrap">{t.colorSpace}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="border border-border rounded-lg bg-bg divide-y divide-border/60">
+      {textures.map((t, i) => (
+        <div key={`${t.name}-${i}`} className="px-2.5 py-2 flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="text-[12.5px] font-medium truncate flex-1 min-w-0" title={t.name}>
+              {t.name}
+            </span>
+            <span className="text-[11px] text-text tabular-nums flex-shrink-0">
+              {t.width && t.height ? `${t.width} × ${t.height}` : '—'}
+            </span>
+          </div>
+          <div className="text-[11px] text-muted truncate">
+            {[t.slots.join(', ') || '—', t.colorSpace].filter(Boolean).join(' · ')}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function ClipTable({ clips, activeIndex, onSelect }) {
+function ClipList({ clips, activeIndex, onSelect }) {
   if (!clips.length) {
-    return <div className="text-[12.5px] text-muted">No animation clips in this model.</div>;
+    return <div className="text-[12px] text-muted">No animation clips in this model.</div>;
   }
   return (
-    <div className="overflow-x-auto border border-border rounded-lg bg-bg">
-      <table className="w-full text-left text-[12px] border-collapse">
-        <thead>
-          <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted">
-            <th className="py-2 px-2.5">Clip</th>
-            <th className="py-2 px-2.5 text-right">Duration</th>
-            <th className="py-2 px-2.5 text-right">Tracks</th>
-            <th className="py-2 px-2.5 text-right">Keyframes</th>
-            <th className="py-2 px-2.5 w-20" />
-          </tr>
-        </thead>
-        <tbody>
-          {clips.map((c) => {
-            const isCurrent = c.index === activeIndex;
-            return (
-              <tr
-                key={`${c.name}-${c.index}`}
-                className={`border-b last:border-b-0 border-border/60 ${
-                  isCurrent ? 'bg-accent/[0.08]' : ''
-                }`}
-              >
-                <td className="py-1.5 px-2.5 font-medium max-w-[240px] truncate" title={c.name}>
-                  {c.name}
-                </td>
-                <td className="py-1.5 px-2.5 text-right tabular-nums whitespace-nowrap">
-                  {formatTime(c.duration)}
-                </td>
-                <td className="py-1.5 px-2.5 text-right tabular-nums text-muted">
-                  {formatNumber(c.tracks)}
-                </td>
-                <td className="py-1.5 px-2.5 text-right tabular-nums text-muted">
-                  {formatNumber(c.keyframes)}
-                </td>
-                <td className="py-1.5 px-2.5 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(c.index)}
-                    className={`px-2 py-0.5 rounded border text-[11px] ${
-                      isCurrent
-                        ? 'border-accent2/40 bg-accent2/15 text-accent2'
-                        : 'border-border text-muted hover:text-text'
-                    }`}
-                  >
-                    {isCurrent ? 'Active' : 'Play'}
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="border border-border rounded-lg bg-bg divide-y divide-border/60">
+      {clips.map((c) => {
+        const isCurrent = c.index === activeIndex;
+        return (
+          <div
+            key={`${c.name}-${c.index}`}
+            className={`px-2.5 py-2 flex items-center justify-between gap-2 ${
+              isCurrent ? 'bg-accent/[0.08]' : ''
+            }`}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-medium truncate" title={c.name}>
+                {c.name}
+              </div>
+              <div className="text-[11px] text-muted tabular-nums">
+                {formatTime(c.duration)} · {formatNumber(c.tracks)} tracks ·{' '}
+                {formatNumber(c.keyframes)} keys
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSelect(c.index)}
+              className={`px-2 py-0.5 rounded border text-[11px] flex-shrink-0 ${
+                isCurrent
+                  ? 'border-accent2/40 bg-accent2/15 text-accent2'
+                  : 'border-border text-muted hover:text-text'
+              }`}
+            >
+              {isCurrent ? 'Active' : 'Play'}
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -44,7 +44,7 @@ app/
   tools/page.js     Tools view — UUID, timestamp, Event Timeline
   texttools/page.js Text Tools view — group list in the sidebar, one text buffer
   color/page.js      Color Tools view — panel list in the sidebar, all color state starts here
-  assets/page.js     Assets Tools view — slicer / packer / viewer in the sidebar
+  assets/page.js     Assets Tools view — slicer / packer / viewer / sync-size in the sidebar
   model3d/page.js    3D Viewer view — model list in the sidebar, GLB/GLTF/OBJ/STL/FBX loader
   spine/page.js      Spine Viewer view — skeleton list in the sidebar, animation/skin/track controls
 components/
@@ -53,7 +53,7 @@ components/
   Modal.js           shared modal wrapper — reuse this for any new dialog
   ItemRow.js         EmptyState
   color/             Color Tools panels (swatch, input, palette, contrast, shades, gradient)
-  assets/            Assets Tools (slicer, packer, viewer) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
+  assets/            Assets Tools (slicer, packer, viewer, sync-size) + Shared.jsx (DropZone, FrameOverlay, Section, toast)
   model3d/           ModelViewport.jsx — the only three.js surface
   spine/             SpineViewport.jsx (the only Spine WebGL surface) + runtime.js, which loads the per-version runtime and builds a version-neutral skeleton handle
 lib/
@@ -61,6 +61,7 @@ lib/
   tools.js           pure functions for the Tools + Text Tools pages
   color.js           pure color math (conversions, palettes, WCAG contrast, shades/tints)
   spritesheet.js     pure Cocos atlas helpers (plist read/write, shelf packing)
+  syncsize.js        pure Sync Size helpers (9-way expand placement, filename deduplication)
   zip.js             store-only ZIP writer + downloadBlob — no zip dependency
   lunar.js           Vietnamese lunar calendar maths + date formatting
   events.js          static event list for the timeline + processEvents()

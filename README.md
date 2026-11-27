@@ -33,7 +33,7 @@ app/
   tools/page.js     Tools view (UUID, timestamp, event timeline)
   texttools/page.js Text Tools view (JSON, case, trim, Base64, URL, HTML, JWT, ...)
   color/page.js     Color Tools view (picker, palette, contrast, shades, gradient)
-  assets/page.js    Assets Tools view (spritesheet slicer, texture packer, viewer)
+  assets/page.js    Assets Tools view (spritesheet slicer, texture packer, viewer, sync size)
   model3d/page.js   3D Viewer view
 components/
   Header.js          top bar (section links, Contact modal, compact mode)

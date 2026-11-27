@@ -5,11 +5,13 @@ import { Sidebar, SubItem, ContentPane } from '@/components/Sidebar';
 import SpriteSheetSlicer from '@/components/assets/SpriteSheetSlicer';
 import TexturePacker from '@/components/assets/TexturePacker';
 import SpritesheetViewer from '@/components/assets/SpritesheetViewer';
+import SyncSize from '@/components/assets/SyncSize';
 
 const ASSET_TOOLS = [
   { key: 'slicer', name: 'SpriteSheet Slicer', desc: 'Cut an atlas into frames', icon: '✂' },
   { key: 'packer', name: 'Texture Packer', desc: 'Pack images into an atlas', icon: '▩' },
   { key: 'viewer', name: 'SpriteSheet Viewer', desc: 'Preview a frame sequence', icon: '▶' },
+  { key: 'sync-size', name: 'Sync Size', desc: 'Resize & expand images to one size', icon: '⤢' },
 ];
 
 export default function AssetsPage() {
@@ -45,6 +47,7 @@ export default function AssetsPage() {
           {activeKey === 'slicer' && <SpriteSheetSlicer />}
           {activeKey === 'packer' && <TexturePacker />}
           {activeKey === 'viewer' && <SpritesheetViewer />}
+          {activeKey === 'sync-size' && <SyncSize />}
         </div>
       </ContentPane>
     </>
